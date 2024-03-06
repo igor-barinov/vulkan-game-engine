@@ -3,6 +3,10 @@
 #include <fstream>
 #include <sstream>
 
+/*
+* CTOR / ASSIGNMENT DEFINITONS
+*/
+
 Shader::Shader()
 	: _module(VK_NULL_HANDLE),
 	_shaderType(Type::NONE),
@@ -51,6 +55,14 @@ Shader::~Shader()
 {
 }
 
+
+
+
+
+/*
+* PUBLIC METHOD DEFINITIONS
+*/
+
 void Shader::load_shader(const std::string & filepath, Type shaderType)
 {
     std::ifstream file(filepath, std::ios::ate | std::ios::binary);
@@ -75,6 +87,14 @@ void Shader::load_shader(const std::string & filepath, Type shaderType)
 
     _shaderType = shaderType;
 }
+
+
+
+
+
+/*
+* PRIVATE CONST METHOD DEFINITIONS
+*/
 
 void Shader::_configure_module(VkShaderModuleCreateInfo* pCreateInfo) const
 {

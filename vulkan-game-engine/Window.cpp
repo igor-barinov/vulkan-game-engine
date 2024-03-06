@@ -3,11 +3,21 @@
 
 #include "VulkanInstance.h"
 
+/*
+* STATIC METHOD DEFINITIONS
+*/
+
 void Window::_framebuffer_resize_callback(WinHandle handle, int width, int height)
 {
-	auto pWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(handle));
+	Window* pWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(handle));
 	pWindow->_frameBufferResized = true;
+	pWindow->_width = width;
+	pWindow->_height = height;
 }
+
+
+
+
 
 /*
 * CTORS / ASSIGNMENT DEFINITIONS
@@ -28,24 +38,27 @@ Window::Window(const char* title, uint32_t width, uint32_t height)
 		throw std::runtime_error("Failed to create Vulkan surface");
 	}
 
-	glfwSetWindowUserPointer(_pWin, this);
+	glfwSetWindowUserPointer(_pWin, reinterpret_cast<void*>(this));
 	glfwSetFramebufferSizeCallback(_pWin, Window::_framebuffer_resize_callback);
 }
 
 Window::Window(const Window& other)
 	: _pWin(other._pWin), _width(other._width), _height(other._height), _surface(other._surface), _frameBufferResized(other._frameBufferResized)
 {
+	glfwSetWindowUserPointer(_pWin, reinterpret_cast<void*>(this));
 }
 
 Window::Window(Window&& other) noexcept
 	:_pWin(nullptr), _width(0), _height(0), _surface(VK_NULL_HANDLE), _frameBufferResized(false)
 {
 	swap(*this, other);
+	glfwSetWindowUserPointer(_pWin, reinterpret_cast<void*>(this));
 }
 
 Window& Window::operator=(Window other)
 {
 	swap(*this, other);
+	glfwSetWindowUserPointer(_pWin, reinterpret_cast<void*>(this));
 	return *this;
 }
 
@@ -67,6 +80,11 @@ Window::~Window()
 void Window::poll()
 {
 	glfwPollEvents();
+}
+
+void Window::idle()
+{
+	glfwWaitEvents();
 }
 
 

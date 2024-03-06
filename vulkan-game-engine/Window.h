@@ -63,6 +63,10 @@ public:
 	*/
 	void poll();
 
+	/* @brief Idles window thread until and event occurs
+	*/
+	void idle();
+
 	/* @brief Resets the status of the window being resized or not
 	*/
 	inline void reset_resize_status() { _frameBufferResized = false; }
@@ -97,6 +101,10 @@ public:
 	*/
 	inline bool was_resized() const { return _frameBufferResized; }
 
+	/* @brief Checks if window is minimized
+	*/
+	inline bool is_minimized() const { return _width == 0 && _height == 0; }
+
 private:
 
 	/*
@@ -119,7 +127,7 @@ private:
 	*/
 	SurfaceHandle _surface;
 
-	/* Has window been resized
+	/* `true` if window was resized, `false` otherwise
 	*/
 	bool _frameBufferResized;
 
@@ -133,5 +141,16 @@ private:
 	*/
 	void _set_window_hints();
 
+
+
+	/*
+	* PRIVATE STATIC METHODS
+	*/
+
+	/* @brief Callback for window resize
+	* @param handle Handle to window that was resized
+	* @param width The new width
+	* @param height The new height
+	*/
 	static void _framebuffer_resize_callback(WinHandle handle, int width, int height);
 };

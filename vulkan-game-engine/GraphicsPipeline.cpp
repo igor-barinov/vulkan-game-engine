@@ -1,5 +1,9 @@
 #include "GraphicsPipeline.h"
 
+/*
+* CTOR / ASSIGNMENT DEFINITIONS
+*/
+
 GraphicsPipeline::GraphicsPipeline()
 	: _layout(VK_NULL_HANDLE),
 	_pipeline(VK_NULL_HANDLE),
@@ -48,7 +52,7 @@ GraphicsPipeline::GraphicsPipeline(const VulkanDevice& device, const SwapChain& 
 	_configure_vertex_input(&vertexInputInfo);
 
 	VkPipelineInputAssemblyStateCreateInfo pipelineInput{};
-	_configure_pipeline_input(&pipelineInput);
+	_configure_pipeline_input_assembly(&pipelineInput);
 
 	VkPipelineViewportStateCreateInfo pipelineViewport{};
 	_configure_pipeline_viewport(&pipelineViewport);
@@ -115,6 +119,14 @@ GraphicsPipeline::~GraphicsPipeline()
 	}
 }
 
+
+
+
+
+/*
+* PRIVATE CONST METHODS DEFINITIONS
+*/
+
 void GraphicsPipeline::_configure_shader_stage(VkPipelineShaderStageCreateInfo* pCreateInfo, const Shader& shader, const char* name) const
 {
 	memset(pCreateInfo, 0, sizeof(VkPipelineShaderStageCreateInfo));
@@ -148,7 +160,7 @@ void GraphicsPipeline::_configure_vertex_input(VkPipelineVertexInputStateCreateI
 	pCreateInfo->vertexAttributeDescriptionCount = 0;
 }
 
-void GraphicsPipeline::_configure_pipeline_input(VkPipelineInputAssemblyStateCreateInfo* pCreateInfo) const
+void GraphicsPipeline::_configure_pipeline_input_assembly(VkPipelineInputAssemblyStateCreateInfo* pCreateInfo) const
 {
 	memset(pCreateInfo, 0, sizeof(VkPipelineInputAssemblyStateCreateInfo));
 	pCreateInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

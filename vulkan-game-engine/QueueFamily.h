@@ -47,6 +47,8 @@ public:
 	*/
 	inline int operator[](QueueFamilyType type) const { return _indices.at(type); }
 
+	/* @brief Returns the queue handle for the given type
+	*/
 	inline VkQueue get_queue_handle(QueueFamilyType type) const { return _handles.at(type); }
 
 	/* @brief Checks if valid indices exist for the given queue family types

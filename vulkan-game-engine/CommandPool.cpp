@@ -2,6 +2,10 @@
 
 #include <stdexcept>
 
+/*
+* CTOR / ASSIGNMENT DEFINITIONS
+*/
+
 CommandPool::CommandPool()
 	: _cmdPool(VK_NULL_HANDLE),
 	_cmdBuffers({}),
@@ -12,7 +16,6 @@ CommandPool::CommandPool()
 	_inFlightFences({}),
 	_deviceHandle(VK_NULL_HANDLE)
 {
-
 }
 
 CommandPool::CommandPool(const VulkanDevice& device, const QueueFamilyInfo& queueFamilyInfo, int maxFramesInFlight)
@@ -71,7 +74,6 @@ CommandPool::CommandPool(const CommandPool& other)
 	_inFlightFences(other._inFlightFences),
 	_deviceHandle(other._deviceHandle)
 {
-
 }
 
 CommandPool::CommandPool(CommandPool&& other) noexcept
@@ -100,6 +102,14 @@ CommandPool::~CommandPool()
 		vkDestroyCommandPool(_deviceHandle, _cmdPool, nullptr);
 	}
 }
+
+
+
+
+
+/*
+* PUBLIC METHOD DEFINITIONS
+*/
 
 void CommandPool::record_render_pass(VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent, VkPipeline pipeline)
 {
@@ -153,6 +163,14 @@ void CommandPool::submit_to_queue(VkQueue queue)
 	}
 }
 
+
+
+
+
+/*
+* PRIVATE CONST METHOD DEFINITIONS
+*/
+
 void CommandPool::_configure_command_pool(VkCommandPoolCreateInfo* pCreateInfo, uint32_t graphicsQueueFamilyIndex) const
 {
 	memset(pCreateInfo, 0, sizeof(VkCommandPoolCreateInfo));
@@ -161,13 +179,13 @@ void CommandPool::_configure_command_pool(VkCommandPoolCreateInfo* pCreateInfo, 
 	pCreateInfo->queueFamilyIndex = graphicsQueueFamilyIndex;
 }
 
-void CommandPool::_configure_command_buffers(VkCommandBufferAllocateInfo* pCreateInfo) const
+void CommandPool::_configure_command_buffers(VkCommandBufferAllocateInfo* pCmdBufferInfo) const
 {
-	memset(pCreateInfo, 0, sizeof(VkCommandBufferAllocateInfo));
-	pCreateInfo->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	pCreateInfo->commandPool = _cmdPool;
-	pCreateInfo->level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	pCreateInfo->commandBufferCount = (uint32_t) _cmdBuffers.size();
+	memset(pCmdBufferInfo, 0, sizeof(VkCommandBufferAllocateInfo));
+	pCmdBufferInfo->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	pCmdBufferInfo->commandPool = _cmdPool;
+	pCmdBufferInfo->level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	pCmdBufferInfo->commandBufferCount = (uint32_t) _cmdBuffers.size();
 }
 
 void CommandPool::_configure_sync_objects(VkSemaphoreCreateInfo* pSemaphoreInfo, VkFenceCreateInfo* pFenceInfo) const

@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <optional>
 #include <mutex>
+#include <future>
 
 #include "Window.h"
 #include "VulkanDevice.h"
@@ -55,6 +56,10 @@ public:
 	*/
 	void run();
 
+	/* @brief Stops the client
+	*/
+	void stop();
+
 private:
 
 	/*
@@ -64,8 +69,6 @@ private:
 	/* Device used for processing
 	*/
 	VulkanDevice _device;
-
-	std::mutex mutex;
 	
 	/* Swap chain used for drawing
 	*/
@@ -87,15 +90,23 @@ private:
 	*/
 	std::vector<CommandPool> _commandPools;
 
+	/* List of futures for window renders
+	*/
+	std::vector<std::future<void>> _windowFutures;
+
+	/* Mutex for locking down queue handles
+	*/
+	std::mutex queueMtx;
+
 
 
 	/*
 	* PRIVATE CONST METHODS
 	*/
 
-	/* @brief Returns the number of window surface that are compatible with the given device
+	/* @brief Checks if the given device is compatible with all surfaces
 	*/
-	int _num_surfaces_compatible(VkPhysicalDevice physicalDevice) const;
+	bool _device_compatible_with_surfaces(VkPhysicalDevice physicalDevice) const;
 
 	/* @brief Checks if the given device supports the given extensions
 	*/
@@ -137,7 +148,7 @@ private:
 	*/
 	void _render_frames(Window& window, SwapChain& swapChain, GraphicsPipeline& pipeline, CommandPool& cmdPool);
 
-	/* Destroys and recreates swap chain
+	/* @brief Destroys and recreates swap chain
 	*/
 	void _recreate_swap_chain(Window& window, SwapChain& swapChain, GraphicsPipeline& pipeline);
 };

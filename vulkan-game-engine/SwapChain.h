@@ -71,14 +71,24 @@ public:
 	*/
 
 	/* @brief Initializes framebuffers for use
+	* 
+	* @param renderPass Handle to render pass that framebuffers will be used with
 	*/
 	void init_framebuffers(VkRenderPass renderPass);
 
 	/* @brief Gets the next image from the swap chain
+	* 
+	* @param semaphore Semaphore used for signaling image acquisition
+	* @param[out] isOutofDate Is set to `true` if the swap chain is outdated, `false` otherwise
+	* @returns The index of the next image in swap chain
 	*/
 	uint32_t get_next_image(VkSemaphore semaphore, bool& isOutofDate);
 
-	/* @brief Presents an image
+	/* @brief Presents an image to swap chain
+	* 
+	* @param presentQueue Handle to present queue
+	* @param pWaitSemaphore Pointer to semaphore used for signaling a finished render
+	* @param[out] pImageIndex Pointer to index of image being presented
 	*/
 	bool present_image(VkQueue presentQueue, VkSemaphore* pWaitSemaphore, uint32_t* pImageIndex);
 

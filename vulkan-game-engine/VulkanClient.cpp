@@ -1,6 +1,5 @@
 #include "VulkanClient.h"
 
-#include <future>
 #include <unordered_set>
 #include <iterator>
 #include <iostream>
@@ -23,6 +22,7 @@ VulkanClient::VulkanClient()
 
 VulkanClient::~VulkanClient()
 {
+	stop();
 }
 
 
@@ -59,36 +59,32 @@ void VulkanClient::init(const std::vector<const char*>& deviceExtensions)
 
 void VulkanClient::run()
 {
-	if (_windows.size() > 1)
+	_render_frames(_windows[0], _swapChains[0], _pipelines[0], _commandPools[0]);
+	/**
+	for (size_t i = 0; i < _windows.size(); ++i)
 	{
-		std::vector<std::future<void>> windowFutures;
-		for (size_t i = 0; i < _windows.size(); ++i)
-		{
-			auto task = [this](Window& win, SwapChain& swapChain, GraphicsPipeline& pipeline, CommandPool& cmdPool) {
-				_render_frames(win, swapChain, pipeline, cmdPool);
-				};
+		auto task = [this](Window& win, SwapChain& swapChain, GraphicsPipeline& pipeline, CommandPool& cmdPool) {
+			_render_frames(win, swapChain, pipeline, cmdPool);
+			};
 
-			windowFutures.push_back(std::async(
-				std::launch::async,
-				task,
-				std::ref(_windows[i]),
-				std::ref(_swapChains[i]),
-				std::ref(_pipelines[i]),
-				std::ref(_commandPools[i])
-			));
-		}
-
-
-		for (auto& result : windowFutures)
-		{
-			result.get();
-		}
+		_windowFutures.push_back(std::async(
+			std::launch::async,
+			task,
+			std::ref(_windows[i]),
+			std::ref(_swapChains[i]),
+			std::ref(_pipelines[i]),
+			std::ref(_commandPools[i])
+		));
 	}
-	else
+	//*/
+}
+
+void VulkanClient::stop()
+{
+	for (auto& future : _windowFutures)
 	{
-		_render_frames(_windows[0], _swapChains[0], _pipelines[0], _commandPools[0]);
+		future.get();
 	}
-	
 }
 
 
@@ -99,21 +95,20 @@ void VulkanClient::run()
 * PRIVATE CONST METHOD DEFINITONS
 */
 
-int VulkanClient::_num_surfaces_compatible(VkPhysicalDevice physicalDevice) const
+bool VulkanClient::_device_compatible_with_surfaces(VkPhysicalDevice physicalDevice) const
 {
-	int result = 0;
 	QueueFamilyInfo queueFamilyInfo;
 	for (const auto& win : _windows)
 	{
 		queueFamilyInfo.load_queue_family_indices(physicalDevice, win.surface_handle());
 
-		if (queueFamilyInfo.all_queue_families_are_supported())
+		if (!queueFamilyInfo.all_queue_families_are_supported())
 		{
-			result++;
+			return false;
 		}
 	}
 
-	return result;
+	return true;
 }
 
 bool VulkanClient::_device_supports_extensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& deviceExtensions) const
@@ -159,23 +154,16 @@ VkPhysicalDevice VulkanClient::_pick_physical_device(const std::vector<const cha
 	auto& vulkan = VulkanInstance::instance();
 	const auto& physicalDevices = vulkan.get_physical_devices();
 
-	VkPhysicalDevice bestDevice = VK_NULL_HANDLE;
-	int maxSurfacesSupported = 0;
-
 	for (const auto& device : physicalDevices)
 	{
+		if (!_device_compatible_with_surfaces(device)) { continue; }
 		if (!_device_supports_extensions(device, deviceExtensions)) { continue; }
 		if (!_device_supports_swap_chain(device)) { continue; }
-
-		int surfacesSupported = _num_surfaces_compatible(device);
-		if (surfacesSupported > maxSurfacesSupported)
-		{
-			bestDevice = device;
-			maxSurfacesSupported = surfacesSupported;
-		}
+		
+		return device;
 	}
 
-	return bestDevice;
+	return VK_NULL_HANDLE;
 }
 
 
@@ -191,6 +179,11 @@ void VulkanClient::_create_logical_device(const std::vector<const char*>& device
 	auto& vulkan = VulkanInstance::instance();
 	const auto& validationLayers = (vulkan.validation_is_enabled()) ? vulkan.get_validation_layers() : std::vector<const char*>{};
 	const auto& physicalDevice = _pick_physical_device(deviceExtensions);
+	if (physicalDevice == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Failed to find a supported physical device");
+	}
+
 	auto queueFamilyInfo = QueueFamilyInfo::info_for(physicalDevice, _windows.front().surface_handle());
 
 	_device = VulkanDevice(physicalDevice, queueFamilyInfo, deviceExtensions, validationLayers);
@@ -240,18 +233,22 @@ void VulkanClient::_render_frames(Window& window, SwapChain& swapChain, Graphics
 {
 	while (!window.should_close())
 	{
+		// 1) Poll for events
 		window.poll();
 
+		// 2) Wait for fences
 		cmdPool.wait_for_fences();
 
+		// 3) Get next image from swap chain
 		bool swapChainIsOutofDate = false;
 		auto imageIndex = swapChain.get_next_image(cmdPool.image_availability_semaphore(), swapChainIsOutofDate);
 		if (swapChainIsOutofDate)
 		{
 			_recreate_swap_chain(window, swapChain, pipeline);
-			return;
+			continue;
 		}
 
+		// 4) Reset fences and record render pass command
 		cmdPool.reset_fences();
 		cmdPool.record_render_pass(
 			pipeline.render_pass(),
@@ -259,22 +256,26 @@ void VulkanClient::_render_frames(Window& window, SwapChain& swapChain, Graphics
 			swapChain.surface_extent(),
 			pipeline.handle()
 		);
-
-		mutex.lock(); // Queue handles cannot be used in multiple threads
+		
+		// 5) Submit command
+		queueMtx.lock();
 		auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
 		cmdPool.submit_to_queue(graphicsQueue);
+		queueMtx.unlock();
 
+		// 6) Present image to swap chain
+		queueMtx.lock();
 		auto presentQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Present);
 		auto waitSemaphore = cmdPool.render_finished_semaphore();
 		swapChainIsOutofDate = swapChain.present_image(presentQueue, &waitSemaphore, &imageIndex);
-		mutex.unlock();
-
+		queueMtx.unlock();
 		if (swapChainIsOutofDate || window.was_resized())
 		{
 			window.reset_resize_status();
 			_recreate_swap_chain(window, swapChain, pipeline);
 		}
 
+		// 7) Update command pool frame counter
 		cmdPool.increment_frame_counter();
 	}
 
@@ -283,11 +284,9 @@ void VulkanClient::_render_frames(Window& window, SwapChain& swapChain, Graphics
 
 void VulkanClient::_recreate_swap_chain(Window& window, SwapChain& swapChain, GraphicsPipeline& pipeline)
 {
-	int width = 0, height = 0;
-	glfwGetFramebufferSize(window.handle(), &width, &height);
-	while (width == 0 || height == 0) {
-		glfwGetFramebufferSize(window.handle(), &width, &height);
-		glfwWaitEvents();
+	while (window.is_minimized()) 
+	{
+		window.idle();
 	}
 
 	vkDeviceWaitIdle(_device.handle());
