@@ -1,5 +1,7 @@
 #include "GraphicsPipeline.h"
 
+#include "Vertex.h"
+
 /*
 * CTOR / ASSIGNMENT DEFINITIONS
 */
@@ -49,7 +51,7 @@ GraphicsPipeline::GraphicsPipeline(const VulkanDevice& device, const SwapChain& 
 	}
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	_configure_vertex_input(&vertexInputInfo);
+	_configure_vertex_input(&vertexInputInfo, Vertex::getAttributeDescriptions(), Vertex::getBindingDescription());
 
 	VkPipelineInputAssemblyStateCreateInfo pipelineInput{};
 	_configure_pipeline_input_assembly(&pipelineInput);
@@ -152,12 +154,18 @@ void GraphicsPipeline::_configure_shader_stage(VkPipelineShaderStageCreateInfo* 
 	pCreateInfo->pName = name;
 }
 
-void GraphicsPipeline::_configure_vertex_input(VkPipelineVertexInputStateCreateInfo* pCreateInfo) const
+void GraphicsPipeline::_configure_vertex_input(
+	VkPipelineVertexInputStateCreateInfo* pCreateInfo, 
+	const std::array<VkVertexInputAttributeDescription, 2>& attributeDescriptions,
+	VkVertexInputBindingDescription bindingDescription
+) const
 {
 	memset(pCreateInfo, 0, sizeof(VkPipelineVertexInputStateCreateInfo));
 	pCreateInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	pCreateInfo->vertexBindingDescriptionCount = 0;
-	pCreateInfo->vertexAttributeDescriptionCount = 0;
+	pCreateInfo->vertexBindingDescriptionCount = 1;
+	pCreateInfo->vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	pCreateInfo->pVertexBindingDescriptions = &bindingDescription;
+	pCreateInfo->pVertexAttributeDescriptions = attributeDescriptions.data();
 }
 
 void GraphicsPipeline::_configure_pipeline_input_assembly(VkPipelineInputAssemblyStateCreateInfo* pCreateInfo) const

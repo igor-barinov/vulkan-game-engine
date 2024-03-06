@@ -75,7 +75,15 @@ public:
 	* @param extenr Extent of surface being drawn to
 	* @param pipeline Handle to graphics pipeline being used
 	*/
-	void record_render_pass(VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent, VkPipeline pipeline);
+	void record_render_pass(
+		VkRenderPass renderPass,
+		VkFramebuffer frameBuffer,
+		VkExtent2D extent,
+		VkPipeline pipeline,
+		VkBuffer* pVertexBuffers,
+		VkBuffer indexBuffer,
+		const std::vector<uint16_t>& indices
+	);
 
 	/* @brief Submits command buffer for current frame to the given queue
 	*/
@@ -98,6 +106,10 @@ public:
 	/*
 	* PUBLIC CONST METHODS
 	*/
+
+	/* @brief Returns handle to command pool object
+	*/
+	inline VkCommandPool handle() const { return _cmdPool; }
 
 	/* @brief Returns the semaphore used for signaling image availability in a swap chain
 	*/

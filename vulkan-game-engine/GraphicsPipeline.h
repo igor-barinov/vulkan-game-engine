@@ -122,7 +122,11 @@ private:
 
 	/* @brief Fills struct with info necessary for creating the vertex input state
 	*/
-	void _configure_vertex_input(VkPipelineVertexInputStateCreateInfo* pCreateInfo) const;
+	void _configure_vertex_input(
+		VkPipelineVertexInputStateCreateInfo* pCreateInfo,
+		const std::array<VkVertexInputAttributeDescription, 2>& attributeDescriptions,
+		VkVertexInputBindingDescription bindingDescription
+	) const;
 
 	/* @brief Fills struct with info necessary for creating the input assembly state
 	*/

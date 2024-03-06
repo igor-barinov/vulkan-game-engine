@@ -12,6 +12,8 @@
 #include "SwapChain.h"
 #include "GraphicsPipeline.h"
 #include "CommandPool.h"
+#include "Buffer.h"
+#include "Vertex.h"
 
 /*
 * Class describing a client for rendering windows
@@ -82,13 +84,25 @@ private:
 	*/
 	std::vector < std::pair < std::string, Shader::Type> > _shaderFiles;
 
-	/* Graphics pipeline
+	/* Graphics pipelines
 	*/
 	std::vector<GraphicsPipeline> _pipelines;
 
-	/* Command pool used for drawing
+	/* Command pools used for drawing
 	*/
 	std::vector<CommandPool> _commandPools;
+
+	/* List of staging buffers
+	*/
+	std::vector<Buffer> _stagingBuffers;
+
+	/* List of vertex buffers
+	*/
+	std::vector<Buffer> _vertexBuffers;
+
+	/* List of index buffers
+	*/
+	std::vector<Buffer> _indexBuffers;
 
 	/* List of futures for window renders
 	*/
@@ -97,6 +111,9 @@ private:
 	/* Mutex for locking down queue handles
 	*/
 	std::mutex queueMtx;
+
+	std::vector<Vertex> _vertices;
+	std::vector<uint16_t> _indices;
 
 
 
@@ -144,9 +161,20 @@ private:
 	*/
 	void _create_command_pools();
 
+	/* @brief Creates staging, vertex, and index buffers
+	*/
+	void _create_buffers();
+
 	/* @brief Renders a frame for the given window
 	*/
-	void _render_frames(Window& window, SwapChain& swapChain, GraphicsPipeline& pipeline, CommandPool& cmdPool);
+	void _render_frames(
+		Window& window,
+		SwapChain& swapChain,
+		GraphicsPipeline& pipeline,
+		CommandPool& cmdPool,
+		Buffer& vertexBuffer,
+		Buffer& indexBuffer
+	);
 
 	/* @brief Destroys and recreates swap chain
 	*/

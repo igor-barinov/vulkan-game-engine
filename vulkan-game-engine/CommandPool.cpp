@@ -111,7 +111,15 @@ CommandPool::~CommandPool()
 * PUBLIC METHOD DEFINITIONS
 */
 
-void CommandPool::record_render_pass(VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent, VkPipeline pipeline)
+void CommandPool::record_render_pass(
+	VkRenderPass renderPass, 
+	VkFramebuffer frameBuffer, 
+	VkExtent2D extent, 
+	VkPipeline pipeline, 
+	VkBuffer* pVertexBuffers, 
+	VkBuffer indexBuffer, 
+	const std::vector<uint16_t>& indices
+)
 {
 	vkResetCommandBuffer(_cmdBuffers[_currentFrameNum], 0);
 
@@ -142,7 +150,12 @@ void CommandPool::record_render_pass(VkRenderPass renderPass, VkFramebuffer fram
 	scissor.extent = extent;
 	vkCmdSetScissor(_cmdBuffers[_currentFrameNum], 0, 1, &scissor);
 
-	vkCmdDraw(_cmdBuffers[_currentFrameNum], 3, 1, 0, 0);
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(_cmdBuffers[_currentFrameNum], 0, 1, pVertexBuffers, offsets);
+	vkCmdBindIndexBuffer(_cmdBuffers[_currentFrameNum], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+	vkCmdDrawIndexed(_cmdBuffers[_currentFrameNum], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
 	vkCmdEndRenderPass(_cmdBuffers[_currentFrameNum]);
 
 	if (vkEndCommandBuffer(_cmdBuffers[_currentFrameNum]) != VK_SUCCESS) 

@@ -16,8 +16,19 @@ VulkanClient::VulkanClient()
 	_windows({}),
 	_shaderFiles({}),
 	_pipelines({}),
-	_commandPools({})
+	_commandPools({}),
+	_stagingBuffers({}),
+	_vertexBuffers({}),
+	_indexBuffers({})
 {
+	_vertices = {
+		Vertex(-0.5, -0.5, 1.0, 0.0, 0.0),
+		Vertex(0.5, -0.5, 0.0, 1.0, 0.0),
+		Vertex(0.5, 0.5, 0.0, 0.0, 1.0),
+		Vertex(-0.5, 0.5, 1.0, 1.0, 1.0)
+	};
+
+	_indices = { 0, 1, 2, 2, 3, 0 };
 }
 
 VulkanClient::~VulkanClient()
@@ -55,11 +66,12 @@ void VulkanClient::init(const std::vector<const char*>& deviceExtensions)
 	}
 
 	_create_command_pools();
+	_create_buffers();
 }
 
 void VulkanClient::run()
 {
-	_render_frames(_windows[0], _swapChains[0], _pipelines[0], _commandPools[0]);
+	_render_frames(_windows[0], _swapChains[0], _pipelines[0], _commandPools[0], _vertexBuffers[0], _indexBuffers[0]);
 	/**
 	for (size_t i = 0; i < _windows.size(); ++i)
 	{
@@ -229,7 +241,36 @@ void VulkanClient::_create_command_pools()
 	}
 }
 
-void VulkanClient::_render_frames(Window& window, SwapChain& swapChain, GraphicsPipeline& pipeline, CommandPool& cmdPool)
+void VulkanClient::_create_buffers()
+{
+	auto vertexBufSize = sizeof(_vertices[0]) * _vertices.size();
+	auto indexBufSize = sizeof(_indices[0]) * _indices.size();
+	Buffer vertexStagingBuf(_device, Buffer::Type::STAGING, vertexBufSize);
+	Buffer indexStagingBuf(_device, Buffer::Type::STAGING, indexBufSize);
+
+	for (size_t i = 0; i < _windows.size(); ++i)
+	{
+		auto cmdPool = _commandPools[i].handle();
+		auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
+
+		_vertexBuffers.push_back(Buffer(_device, Buffer::Type::VERTEX, vertexBufSize));
+		vertexStagingBuf.map_host_data(_vertices.data());
+		vertexStagingBuf.copy_to(_vertexBuffers[i], cmdPool, graphicsQueue);
+
+		_indexBuffers.push_back(Buffer(_device, Buffer::Type::INDEX, indexBufSize));
+		indexStagingBuf.map_host_data(_indices.data());
+		indexStagingBuf.copy_to(_indexBuffers[i], cmdPool, graphicsQueue);
+	}
+}
+
+void VulkanClient::_render_frames(
+	Window& window, 
+	SwapChain& swapChain, 
+	GraphicsPipeline& pipeline, 
+	CommandPool& cmdPool, 
+	Buffer& vertexBuffer, 
+	Buffer& indexBuffer
+)
 {
 	while (!window.should_close())
 	{
@@ -249,12 +290,16 @@ void VulkanClient::_render_frames(Window& window, SwapChain& swapChain, Graphics
 		}
 
 		// 4) Reset fences and record render pass command
+		VkBuffer vertexBuffers[] = {vertexBuffer.handle()};
 		cmdPool.reset_fences();
 		cmdPool.record_render_pass(
 			pipeline.render_pass(),
 			swapChain.frame_buffer_at(imageIndex),
 			swapChain.surface_extent(),
-			pipeline.handle()
+			pipeline.handle(),
+			vertexBuffers,
+			indexBuffer.handle(),
+			_indices
 		);
 		
 		// 5) Submit command

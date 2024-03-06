@@ -23,6 +23,9 @@
     <Filter Include="Example Shaders">
       <UniqueIdentifier>{c2cfd44e-bda4-4d02-8836-1e0f0d9a27f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Meshes">
+      <UniqueIdentifier>{b94e4185-f3d3-4cb9-8a2f-d2be9a6b0be3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -55,6 +58,12 @@
     <ClCompile Include="CommandPool.cpp">
       <Filter>VulkanClient</Filter>
     </ClCompile>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>GraphicsPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="Vertex.cpp">
+      <Filter>Meshes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -83,6 +92,12 @@
     </ClInclude>
     <ClInclude Include="CommandPool.h">
       <Filter>VulkanClient</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>GraphicsPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Meshes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
