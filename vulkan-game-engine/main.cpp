@@ -8,29 +8,26 @@
 
 #include <iostream>
 
+#include "VulkanClient.h"
+#include "VulkanInstance.h"
+
 int main(int argc, char* argv[])
 {
-    glfwInit();
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
+    VulkanInstance& vulkan = VulkanInstance::instance();
+    VulkanClient client;
 
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-    std::cout << extensionCount << " extensions supported\n";
-
-    glm::mat4 matrix;
-    glm::vec4 vec;
-    auto test = matrix * vec;
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+    client.add_window("Game Engine", 1920, 1080);
+    /**
+    for (int i = 0; i < 1; i++)
+    {
+        client.add_window("Small", 800, 600);
     }
-
-    glfwDestroyWindow(window);
-
-    glfwTerminate();
+    //*/
+    client.add_shader("vert.spv", Shader::VERTEX);
+    client.add_shader("frag.spv", Shader::FRAGMENT);
+    client.init({ VK_KHR_SWAPCHAIN_EXTENSION_NAME });
+    client.run();
 
 	return 0;
 }

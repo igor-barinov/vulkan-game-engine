@@ -5,18 +5,92 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="Window">
+      <UniqueIdentifier>{9c7a75f3-beba-4748-ba93-cf4c0e944e69}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="VulkanInstance">
+      <UniqueIdentifier>{dc6ecad1-eb1b-4765-ab22-e2e513f10370}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VulkanDevice">
+      <UniqueIdentifier>{ec145fd0-d851-4d39-b615-89847df28557}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VulkanClient">
+      <UniqueIdentifier>{2e52d9a7-7755-4c93-a51c-e3d07ff4e22c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphicsPipeline">
+      <UniqueIdentifier>{5989d273-6473-4dab-b778-cfd59b29115c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Example Shaders">
+      <UniqueIdentifier>{c2cfd44e-bda4-4d02-8836-1e0f0d9a27f5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanInstance.cpp">
+      <Filter>VulkanInstance</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanDevice.cpp">
+      <Filter>VulkanDevice</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanClient.cpp">
+      <Filter>VulkanClient</Filter>
+    </ClCompile>
+    <ClCompile Include="QueueFamily.cpp">
+      <Filter>VulkanClient</Filter>
+    </ClCompile>
+    <ClCompile Include="SwapChain.cpp">
+      <Filter>VulkanClient</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline.cpp">
+      <Filter>GraphicsPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>GraphicsPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandPool.cpp">
+      <Filter>VulkanClient</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Window.h">
+      <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanInstance.h">
+      <Filter>VulkanInstance</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanDevice.h">
+      <Filter>VulkanDevice</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanClient.h">
+      <Filter>VulkanClient</Filter>
+    </ClInclude>
+    <ClInclude Include="QueueFamily.h">
+      <Filter>VulkanClient</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChain.h">
+      <Filter>VulkanClient</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline.h">
+      <Filter>GraphicsPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>GraphicsPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandPool.h">
+      <Filter>VulkanClient</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader.frag">
+      <Filter>Example Shaders</Filter>
+    </None>
+    <None Include="shader.vert">
+      <Filter>Example Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
