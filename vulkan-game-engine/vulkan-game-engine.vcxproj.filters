@@ -43,22 +43,7 @@
     <ClCompile Include="VulkanClient.cpp">
       <Filter>VulkanClient</Filter>
     </ClCompile>
-    <ClCompile Include="QueueFamily.cpp">
-      <Filter>VulkanClient</Filter>
-    </ClCompile>
-    <ClCompile Include="SwapChain.cpp">
-      <Filter>VulkanClient</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsPipeline.cpp">
-      <Filter>GraphicsPipeline</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>GraphicsPipeline</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandPool.cpp">
-      <Filter>VulkanClient</Filter>
-    </ClCompile>
-    <ClCompile Include="Buffer.cpp">
       <Filter>GraphicsPipeline</Filter>
     </ClCompile>
     <ClCompile Include="Vertex.cpp">
@@ -66,6 +51,21 @@
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>VulkanDevice</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandPool.cpp">
+      <Filter>GraphicsPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="QueueFamily.cpp">
+      <Filter>GraphicsPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="SwapChain.cpp">
+      <Filter>GraphicsPipeline</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -81,22 +81,7 @@
     <ClInclude Include="VulkanClient.h">
       <Filter>VulkanClient</Filter>
     </ClInclude>
-    <ClInclude Include="QueueFamily.h">
-      <Filter>VulkanClient</Filter>
-    </ClInclude>
-    <ClInclude Include="SwapChain.h">
-      <Filter>VulkanClient</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsPipeline.h">
-      <Filter>GraphicsPipeline</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>GraphicsPipeline</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandPool.h">
-      <Filter>VulkanClient</Filter>
-    </ClInclude>
-    <ClInclude Include="Buffer.h">
       <Filter>GraphicsPipeline</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
@@ -104,6 +89,21 @@
     </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>VulkanDevice</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandPool.h">
+      <Filter>GraphicsPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="QueueFamily.h">
+      <Filter>GraphicsPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChain.h">
+      <Filter>GraphicsPipeline</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
