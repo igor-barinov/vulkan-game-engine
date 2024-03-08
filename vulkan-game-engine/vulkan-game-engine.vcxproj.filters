@@ -64,6 +64,9 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>Meshes</Filter>
     </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Meshes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -97,6 +100,9 @@
       <Filter>GraphicsPipeline</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
+      <Filter>Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
       <Filter>Meshes</Filter>
     </ClInclude>
   </ItemGroup>

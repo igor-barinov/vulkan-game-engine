@@ -1,5 +1,9 @@
 #include "Vertex.h"
 
+/*
+* STATIC METHOD DEFINITIONS
+*/
+
 VkVertexInputBindingDescription Vertex::getBindingDescription()
 {
     VkVertexInputBindingDescription bindingDescription{};
@@ -26,6 +30,14 @@ std::array<VkVertexInputAttributeDescription, 2> Vertex::getAttributeDescription
 
     return attributeDescriptions;
 }
+
+
+
+
+
+/*
+* CTOR / ASSIGNMENT DEFINITIONS
+*/
 
 Vertex::Vertex(float x, float y, float r, float g, float b)
     : _pos({x, y}),

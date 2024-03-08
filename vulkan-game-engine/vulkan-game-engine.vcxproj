@@ -147,6 +147,7 @@
     <ClCompile Include="CommandPool.cpp" />
     <ClCompile Include="GraphicsPipeline.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="QueueFamily.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SwapChain.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="CommandPool.h" />
     <ClInclude Include="GraphicsPipeline.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="QueueFamily.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SwapChain.h" />

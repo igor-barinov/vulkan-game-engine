@@ -13,7 +13,7 @@
 #include "GraphicsPipeline.h"
 #include "CommandPool.h"
 #include "Buffer.h"
-#include "Vertex.h"
+#include "Mesh.h"
 
 /*
 * Class describing a client for rendering windows
@@ -112,8 +112,9 @@ private:
 	*/
 	std::mutex queueMtx;
 
-	std::vector<Vertex> _vertices;
-	std::vector<uint16_t> _indices;
+	/* List of meshes
+	*/
+	std::vector<Mesh> _meshes;
 
 
 

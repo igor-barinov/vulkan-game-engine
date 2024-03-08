@@ -21,14 +21,15 @@ VulkanClient::VulkanClient()
 	_vertexBuffers({}),
 	_indexBuffers({})
 {
-	_vertices = {
-		Vertex(-0.5, -0.5, 1.0, 0.0, 0.0),
-		Vertex(0.5, -0.5, 0.0, 1.0, 0.0),
-		Vertex(0.5, 0.5, 0.0, 0.0, 1.0),
-		Vertex(-0.5, 0.5, 1.0, 1.0, 1.0)
+	_meshes = {
+		Mesh({
+			Vertex(-0.5, -0.5, 1.0, 0.0, 0.0),
+			Vertex(0.5, -0.5, 0.0, 1.0, 0.0),
+			Vertex(0.5, 0.5, 0.0, 0.0, 1.0),
+			Vertex(-0.5, 0.5, 1.0, 1.0, 1.0)
+		},
+		{0, 1, 2, 2, 3, 0})
 	};
-
-	_indices = { 0, 1, 2, 2, 3, 0 };
 }
 
 VulkanClient::~VulkanClient()
@@ -243,8 +244,8 @@ void VulkanClient::_create_command_pools()
 
 void VulkanClient::_create_buffers()
 {
-	auto vertexBufSize = sizeof(_vertices[0]) * _vertices.size();
-	auto indexBufSize = sizeof(_indices[0]) * _indices.size();
+	auto vertexBufSize = _meshes[0].size_of_vertices();
+	auto indexBufSize = _meshes[0].size_of_indices();
 	Buffer vertexStagingBuf(_device, Buffer::Type::STAGING, vertexBufSize);
 	Buffer indexStagingBuf(_device, Buffer::Type::STAGING, indexBufSize);
 
@@ -254,11 +255,11 @@ void VulkanClient::_create_buffers()
 		auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
 
 		_vertexBuffers.push_back(Buffer(_device, Buffer::Type::VERTEX, vertexBufSize));
-		vertexStagingBuf.map_host_data(_vertices.data());
+		vertexStagingBuf.map_host_data(_meshes[0].vertex_data());
 		vertexStagingBuf.copy_to(_vertexBuffers[i], cmdPool, graphicsQueue);
 
 		_indexBuffers.push_back(Buffer(_device, Buffer::Type::INDEX, indexBufSize));
-		indexStagingBuf.map_host_data(_indices.data());
+		indexStagingBuf.map_host_data(_meshes[0].index_data());
 		indexStagingBuf.copy_to(_indexBuffers[i], cmdPool, graphicsQueue);
 	}
 }
@@ -299,7 +300,7 @@ void VulkanClient::_render_frames(
 			pipeline.handle(),
 			vertexBuffers,
 			indexBuffer.handle(),
-			_indices
+			_meshes[0].indices()
 		);
 		
 		// 5) Submit command

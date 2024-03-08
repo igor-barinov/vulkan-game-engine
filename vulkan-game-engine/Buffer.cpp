@@ -1,5 +1,9 @@
 #include "Buffer.h"
 
+/*
+* CTORS / ASSIGNMENT DEFINITIONS
+*/
+
 Buffer::Buffer()
 	: _buf(VK_NULL_HANDLE),
 	_bufMem(VK_NULL_HANDLE),
@@ -67,6 +71,14 @@ Buffer::~Buffer()
 	}
 }
 
+
+
+
+
+/*
+* PUBLIC METHOD DEFINITIONS
+*/
+
 void Buffer::map_host_data(const void* data)
 {
 	void* mappedData;
@@ -109,6 +121,14 @@ void Buffer::copy_to(Buffer& destBuf, VkCommandPool commandPool, VkQueue graphic
 	vkFreeCommandBuffers(_deviceHandle, commandPool, 1, &commandBuffer);
 }
 
+
+
+
+
+/*
+* PRIVATE METHOD DEFINITIONS
+*/
+
 void Buffer::_create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags memPropFlags)
 {
 	VkBufferCreateInfo bufferInfo{};
@@ -132,6 +152,14 @@ void Buffer::_create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags memP
 
 	vkBindBufferMemory(_deviceHandle, _buf, _bufMem, 0);
 }
+
+
+
+
+
+/*
+* PRIVATE CONST METHOD DEFINITIONS
+*/
 
 uint32_t Buffer::_find_memory_type(uint32_t typeMask, VkMemoryPropertyFlags memPropFlags) const
 {
