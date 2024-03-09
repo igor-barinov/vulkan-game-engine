@@ -22,6 +22,7 @@ public:
 		STAGING,
 		VERTEX,
 		INDEX,
+		UNIFORM,
 		NONE
 	};
 
@@ -40,6 +41,8 @@ public:
 		using std::swap;
 
 		swap(bufA._buf, bufB._buf);
+		swap(bufA._usageFlags, bufB._usageFlags);
+		swap(bufA._memFlags, bufB._memFlags);
 		swap(bufA._bufMem, bufB._bufMem);
 		swap(bufA._bufSize, bufB._bufSize);
 		swap(bufA._deviceHandle, bufB._deviceHandle);
@@ -71,9 +74,17 @@ public:
 	* PUBLIC METHODS
 	*/
 
-	/* @brief Maps and copies the given data from CPU to GPU
+	/* @brief Maps host data to GPU memory
 	*/
-	void map_host_data(const void* data);
+	inline void map_memory(void** pData) { vkMapMemory(_deviceHandle, _bufMem, 0, _bufSize, 0, pData); }
+
+	/* @brief Unmaps GPU memory
+	*/
+	inline void unmap_memory() { vkUnmapMemory(_deviceHandle, _bufMem); }
+
+	/* @brief Copies the given data into mapped memory
+	*/
+	void copy_to_mapped_mem(const void* data);
 
 	/* @brief Copies data from this buffer to the given buffer
 	*/
@@ -98,6 +109,14 @@ private:
 	/* Handle to buffer object
 	*/
 	Handle _buf;
+
+	/* Buffer usage flags
+	*/
+	VkBufferUsageFlags _usageFlags;
+
+	/* Memory property flags
+	*/
+	VkMemoryPropertyFlags _memFlags;
 
 	/* Handle to device memory
 	*/

@@ -77,7 +77,8 @@ GraphicsPipeline::GraphicsPipeline(const VulkanDevice& device, const SwapChain& 
 	_configure_pipeline_dynamic_state(&dynamicStateInfo, dynamicStates);
 
 	VkPipelineLayoutCreateInfo layoutInfo;
-	_configure_pipeline_layout(&layoutInfo);
+	auto setLayout = CommandPool::get_descriptor_set_layout(_deviceHandle);
+	_configure_pipeline_layout(&layoutInfo, &setLayout);
 
 	if (vkCreatePipelineLayout(_deviceHandle, &layoutInfo, nullptr, &_layout) != VK_SUCCESS)
 	{
@@ -183,7 +184,7 @@ void GraphicsPipeline::_configure_pipeline_viewport(VkPipelineViewportStateCreat
 	pCreateInfo->viewportCount = 1;
 	pCreateInfo->scissorCount = 1;
 }
-
+ 
 void GraphicsPipeline::_configure_pipeline_rasterization(VkPipelineRasterizationStateCreateInfo* pCreateInfo) const
 {
 	memset(pCreateInfo, 0, sizeof(VkPipelineRasterizationStateCreateInfo));
@@ -193,7 +194,7 @@ void GraphicsPipeline::_configure_pipeline_rasterization(VkPipelineRasterization
 	pCreateInfo->polygonMode = VK_POLYGON_MODE_FILL;
 	pCreateInfo->lineWidth = 1.0f;
 	pCreateInfo->cullMode = VK_CULL_MODE_BACK_BIT;
-	pCreateInfo->frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pCreateInfo->frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pCreateInfo->depthBiasEnable = VK_FALSE;
 }
 
@@ -231,11 +232,12 @@ void GraphicsPipeline::_configure_pipeline_dynamic_state(VkPipelineDynamicStateC
 	pCreateInfo->pDynamicStates = dynamicStates.data();
 }
 
-void GraphicsPipeline::_configure_pipeline_layout(VkPipelineLayoutCreateInfo* pCreateInfo) const
+void GraphicsPipeline::_configure_pipeline_layout(VkPipelineLayoutCreateInfo* pCreateInfo, VkDescriptorSetLayout* pSetLayouts) const
 {
 	memset(pCreateInfo, 0, sizeof(VkPipelineLayoutCreateInfo));
 	pCreateInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pCreateInfo->setLayoutCount = 0;
+	pCreateInfo->setLayoutCount = 1;
+	pCreateInfo->pSetLayouts = pSetLayouts;
 	pCreateInfo->pushConstantRangeCount = 0;
 }
 

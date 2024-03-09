@@ -1,12 +1,14 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 
 #include <algorithm>
 #include <vector>
 
 #include "QueueFamily.h"
 #include "VulkanDevice.h"
+#include "Buffer.h"
 
 /*
 * Class that implements a Vulkan command pool
@@ -40,8 +42,23 @@ public:
 		swap(poolA._imgAvailableSemaphores, poolB._imgAvailableSemaphores);
 		swap(poolA._renderFinishedSemaphores, poolB._renderFinishedSemaphores);
 		swap(poolA._inFlightFences, poolB._inFlightFences);
+		swap(poolA._uniformBuffers, poolB._uniformBuffers);
+		swap(poolA._uniBufMappedMem, poolB._uniBufMappedMem);
+		swap(poolA._descriptorPool, poolB._descriptorPool);
+		swap(poolA._descriptorSetLayout, poolB._descriptorSetLayout);
+		swap(poolA._descriptorSets, poolB._descriptorSets);
 		swap(poolA._deviceHandle, poolB._deviceHandle);
 	}
+
+
+
+	/*
+	* PUBLIC STATIC METHODS
+	*/
+
+	/* @brief Returns the descriptor set layout
+	*/
+	static VkDescriptorSetLayout get_descriptor_set_layout(VkDevice device);
 
 
 
@@ -80,6 +97,7 @@ public:
 		VkFramebuffer frameBuffer,
 		VkExtent2D extent,
 		VkPipeline pipeline,
+		VkPipelineLayout pipelineLayout,
 		VkBuffer* pVertexBuffers,
 		VkBuffer indexBuffer,
 		const std::vector<uint16_t>& indices
@@ -88,6 +106,10 @@ public:
 	/* @brief Submits command buffer for current frame to the given queue
 	*/
 	void submit_to_queue(VkQueue queue);
+
+	/* @brief Updates the current uniform buffer object
+	*/
+	void update_ubo(glm::mat4 model, glm::mat4 view, glm::mat4 projection);
 
 	/* @brief Waits for the fences for the current frame
 	*/
@@ -122,6 +144,28 @@ public:
 private:
 
 	/*
+	* PRIVATE STRUCTS
+	*/
+	struct _UBO
+	{
+		alignas(16) glm::mat4 model;
+		alignas(16) glm::mat4 view;
+		alignas(16) glm::mat4 projection;
+	};
+
+
+
+	/*
+	* PRIVATE STATIC MEMBERS
+	*/
+
+	/* Handle to descriptor set layout
+	*/
+	static VkDescriptorSetLayout _descriptorSetLayout;
+
+
+
+	/*
 	* PRIVATE MEMBERS
 	*/
 
@@ -153,9 +197,38 @@ private:
 	*/
 	std::vector<VkFence> _inFlightFences;
 
+	/* List of uniform buffers
+	*/
+	std::vector<Buffer> _uniformBuffers;
+
+	/* List of mapped uniform buffer memory
+	*/
+	std::vector<void*> _uniBufMappedMem;
+
+	/* Handle to descriptor pool
+	*/
+	VkDescriptorPool _descriptorPool;
+
+	/* List of descriptor sets
+	*/
+	std::vector<VkDescriptorSet> _descriptorSets;
+
 	/* Handle to device being used
 	*/
 	VkDevice _deviceHandle;
+
+
+
+	/*
+	* PRIVATE STATIC METHODS
+	*/
+
+	/* @brief Fills struct with necessary info for creating descriptor set layout
+	*
+	* @param[out] pCreateInfo The struct to fill
+	* @param[out] pLayoutBinding Pointer to layout binding info
+	*/
+	static void _configure_descriptor_set_layout(VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkDescriptorSetLayoutBinding* pLayoutBinding);
 
 
 
@@ -200,4 +273,26 @@ private:
 	* @param pWaitStages Pointer to stage flags
 	*/
 	void _configure_queue_submission(VkSubmitInfo* pCreateInfo, VkPipelineStageFlags* pWaitStages) const;
+
+	/* @brief Fills struct with necessary info for creating a descriptor pool
+	* 
+	* @param[out] pCreateInfo The struct to fill
+	* @param[out] pSizeInfo Pointer to pool size info
+	*/
+	void _configure_descriptor_pool(VkDescriptorPoolCreateInfo* pCreateInfo, VkDescriptorPoolSize* pSizeInfo) const;
+
+	/* @brief Fills struct with necessary info for allocating descriptor set
+	*
+	* @param[out] pAllocInfo The struct to fill
+	* @param setLayouts List of descriptor set layouts
+	*/
+	void _configure_descriptor_set_alloc(VkDescriptorSetAllocateInfo* pAllocInfo, const std::vector<VkDescriptorSetLayout>& setLayouts) const;
+
+	/* @brief Fills struct with necessary info for writing to descriptor set
+	*
+	* @param[out] pWriteInfo The struct to fill
+	* @param[out] VkDescriptorBufferInfo Pointer to descriptor buffer info
+	*/
+	void _configure_descriptor_set(VkWriteDescriptorSet* pWriteInfo, VkDescriptorBufferInfo* pBufInfo, VkBuffer buffer, VkDescriptorSet descriptorSet) const;
+
 };

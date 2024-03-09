@@ -7,6 +7,7 @@
 
 #include "Shader.h"
 #include "SwapChain.h"
+#include "CommandPool.h"
 
 /*
 * Class implementing Vulkan graphics pipeline
@@ -66,6 +67,10 @@ public:
 	/* @brief Returns the handle to the pipeline
 	*/
 	inline Handle handle() const { return _pipeline; }
+
+	/* @brief Returns handle to pipeline layout object
+	*/
+	inline VkPipelineLayout layout_handle() const { return _layout; }
 
 	/* @brief Returns the handle to the render pass
 	*/
@@ -154,7 +159,7 @@ private:
 
 	/* @brief Fills struct with info necessary for creating the pipeline layout
 	*/
-	void _configure_pipeline_layout(VkPipelineLayoutCreateInfo* pCreateInfo) const;
+	void _configure_pipeline_layout(VkPipelineLayoutCreateInfo* pCreateInfo, VkDescriptorSetLayout* pSetLayouts) const;
 
 	/* @brief Fills struct with info necessary for creating a color attachment
 	*/

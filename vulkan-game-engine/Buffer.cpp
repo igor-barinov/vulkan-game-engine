@@ -6,6 +6,8 @@
 
 Buffer::Buffer()
 	: _buf(VK_NULL_HANDLE),
+	_usageFlags(0),
+	_memFlags(0),
 	_bufMem(VK_NULL_HANDLE),
 	_bufSize(0),
 	_deviceHandle(VK_NULL_HANDLE),
@@ -15,39 +17,46 @@ Buffer::Buffer()
 
 Buffer::Buffer(const VulkanDevice& device, Buffer::Type bufferType, size_t bufferSize)
 	: _buf(VK_NULL_HANDLE),
+	_usageFlags(0),
+	_memFlags(0),
 	_bufMem(VK_NULL_HANDLE),
 	_bufSize(bufferSize),
 	_deviceHandle(device.handle()),
 	_physicalDeviceHandle(device.get_physical_device())
 {
-	VkBufferUsageFlags usageFlags = 0;
-	VkMemoryPropertyFlags memPropFlags = 0;
 	switch (bufferType)
 	{
 	case Buffer::STAGING:
-		usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		memPropFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		_usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		_memFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		break;
 	case Buffer::VERTEX:
-		usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		memPropFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		_usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		_memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		break;
 	case Buffer::INDEX:
-		usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-		memPropFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		_usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+		_memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		break;
+	case Buffer::UNIFORM:
+		_usageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		_memFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		break;
 	}
 
-	_create_buffer(usageFlags, memPropFlags);
+	_create_buffer(_usageFlags, _memFlags);
 }
 
 Buffer::Buffer(const Buffer& other)
-	: _buf(other._buf),
-	_bufMem(other._bufMem),
+	: _buf(VK_NULL_HANDLE),
+	_usageFlags(other._usageFlags),
+	_memFlags(other._memFlags),
+	_bufMem(VK_NULL_HANDLE),
 	_bufSize(other._bufSize),
 	_deviceHandle(other._deviceHandle),
 	_physicalDeviceHandle(other._physicalDeviceHandle)
 {
+	_create_buffer(_usageFlags, _memFlags);
 }
 
 Buffer::Buffer(Buffer&& other) noexcept
@@ -68,6 +77,8 @@ Buffer::~Buffer()
 	{
 		vkDestroyBuffer(_deviceHandle, _buf, nullptr);
 		vkFreeMemory(_deviceHandle, _bufMem, nullptr);
+		_buf = VK_NULL_HANDLE;
+		_bufMem = VK_NULL_HANDLE;
 	}
 }
 
@@ -79,12 +90,12 @@ Buffer::~Buffer()
 * PUBLIC METHOD DEFINITIONS
 */
 
-void Buffer::map_host_data(const void* data)
+void Buffer::copy_to_mapped_mem(const void* data)
 {
 	void* mappedData;
-	vkMapMemory(_deviceHandle, _bufMem, 0, _bufSize, 0, &mappedData);
+	map_memory(&mappedData);
 	memcpy(mappedData, data, (size_t)_bufSize);
-	vkUnmapMemory(_deviceHandle, _bufMem);
+	unmap_memory();
 }
 
 void Buffer::copy_to(Buffer& destBuf, VkCommandPool commandPool, VkQueue graphicsQueue)

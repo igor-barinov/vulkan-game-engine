@@ -2,6 +2,41 @@
 
 #include <stdexcept>
 
+VkDescriptorSetLayout CommandPool::_descriptorSetLayout = VK_NULL_HANDLE;
+
+VkDescriptorSetLayout CommandPool::get_descriptor_set_layout(VkDevice device)
+{
+	if (_descriptorSetLayout == VK_NULL_HANDLE)
+	{
+		VkDescriptorSetLayoutCreateInfo descriptorSetInfo{};
+		VkDescriptorSetLayoutBinding uboBinding{};
+		_configure_descriptor_set_layout(&descriptorSetInfo, &uboBinding);
+
+		if (vkCreateDescriptorSetLayout(device, &descriptorSetInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create descriptor set layout");
+		}
+	}
+
+	return _descriptorSetLayout;
+}
+
+void CommandPool::_configure_descriptor_set_layout(VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkDescriptorSetLayoutBinding* pLayoutBinding)
+{
+	memset(pLayoutBinding, 0, sizeof(VkDescriptorSetLayoutBinding));
+	pLayoutBinding->binding = 0;
+	pLayoutBinding->descriptorCount = 1;
+	pLayoutBinding->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	pLayoutBinding->pImmutableSamplers = nullptr;
+	pLayoutBinding->stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	memset(pCreateInfo, 0, sizeof(VkDescriptorSetLayoutCreateInfo));
+	pCreateInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	pCreateInfo->bindingCount = 1;
+	pCreateInfo->pBindings = pLayoutBinding;
+}
+
+
 /*
 * CTOR / ASSIGNMENT DEFINITIONS
 */
@@ -14,6 +49,10 @@ CommandPool::CommandPool()
 	_imgAvailableSemaphores({}),
 	_renderFinishedSemaphores({}),
 	_inFlightFences({}),
+	_uniformBuffers({}),
+	_uniBufMappedMem({}),
+	_descriptorPool(VK_NULL_HANDLE),
+	_descriptorSets({}),
 	_deviceHandle(VK_NULL_HANDLE)
 {
 }
@@ -26,8 +65,13 @@ CommandPool::CommandPool(const VulkanDevice& device, const QueueFamilyInfo& queu
 	_imgAvailableSemaphores({}),
 	_renderFinishedSemaphores({}),
 	_inFlightFences({}),
+	_uniformBuffers({}),
+	_uniBufMappedMem({}),
+	_descriptorPool(VK_NULL_HANDLE),
+	_descriptorSets({}),
 	_deviceHandle(device.handle())
 {
+	// 1) Create command pool object
 	VkCommandPoolCreateInfo poolInfo{};
 	_configure_command_pool(&poolInfo, queueFamilyInfo[QueueFamilyType::Graphics]);
 
@@ -36,6 +80,7 @@ CommandPool::CommandPool(const VulkanDevice& device, const QueueFamilyInfo& queu
 		throw std::runtime_error("Failed to create command pool");
 	}
 
+	// 2) Allocate command buffers
 	VkCommandBufferAllocateInfo bufferInfo{};
 	_cmdBuffers.resize(maxFramesInFlight);
 	_configure_command_buffers(&bufferInfo);
@@ -45,6 +90,7 @@ CommandPool::CommandPool(const VulkanDevice& device, const QueueFamilyInfo& queu
 		throw std::runtime_error("Failed to allocate command buffers");
 	}
 
+	// 3) Create sync objects
 	_imgAvailableSemaphores.resize(maxFramesInFlight);
 	_renderFinishedSemaphores.resize(maxFramesInFlight);
 	_inFlightFences.resize(maxFramesInFlight);
@@ -62,6 +108,46 @@ CommandPool::CommandPool(const VulkanDevice& device, const QueueFamilyInfo& queu
 			throw std::runtime_error("Failed to create sync objects");
 		}
 	}
+
+	// 4) Create uniform buffers
+	_uniformBuffers = std::vector<Buffer>(_numFramesInFlight, Buffer(device, Buffer::Type::UNIFORM, sizeof(_UBO)));
+	_uniBufMappedMem.resize(_numFramesInFlight);
+	for (size_t i = 0; i < _numFramesInFlight; i++)
+	{
+		_uniformBuffers[i].map_memory(&_uniBufMappedMem[i]);
+	}
+
+	// 5) Create descriptor set layout if needed
+	get_descriptor_set_layout(_deviceHandle);
+
+	// 6) Create descriptor pool
+	VkDescriptorPoolCreateInfo descriptorPoolInfo{};
+	VkDescriptorPoolSize poolSize{};
+	_configure_descriptor_pool(&descriptorPoolInfo, &poolSize);
+
+	if (vkCreateDescriptorPool(_deviceHandle, &descriptorPoolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) 
+	{
+		throw std::runtime_error("Failed to create descriptor pool");
+	}
+
+	// 7) Create descriptor sets
+	std::vector<VkDescriptorSetLayout> descriptorSetLayouts(_numFramesInFlight, _descriptorSetLayout);
+	VkDescriptorSetAllocateInfo setAllocInfo{};
+	_configure_descriptor_set_alloc(&setAllocInfo, descriptorSetLayouts);
+
+	_descriptorSets.resize(_numFramesInFlight);
+	if (vkAllocateDescriptorSets(_deviceHandle, &setAllocInfo, _descriptorSets.data()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to allocate descriptor sets");
+	}
+
+	for (size_t i = 0; i < _numFramesInFlight; ++i)
+	{
+		VkWriteDescriptorSet writeInfo{};
+		VkDescriptorBufferInfo uniBufInfo{};
+		_configure_descriptor_set(&writeInfo, &uniBufInfo, _uniformBuffers[i].handle(), _descriptorSets[i]);
+		vkUpdateDescriptorSets(_deviceHandle, 1, &writeInfo, 0, nullptr);
+	}
 }
 
 CommandPool::CommandPool(const CommandPool& other)
@@ -72,8 +158,13 @@ CommandPool::CommandPool(const CommandPool& other)
 	_imgAvailableSemaphores(other._imgAvailableSemaphores),
 	_renderFinishedSemaphores(other._renderFinishedSemaphores),
 	_inFlightFences(other._inFlightFences),
+	_uniformBuffers(other._uniformBuffers),
+	_uniBufMappedMem(other._uniBufMappedMem),
+	_descriptorPool(other._descriptorPool),
+	_descriptorSets(other._descriptorSets),
 	_deviceHandle(other._deviceHandle)
 {
+	get_descriptor_set_layout(_deviceHandle);
 }
 
 CommandPool::CommandPool(CommandPool&& other) noexcept
@@ -92,6 +183,10 @@ CommandPool::~CommandPool()
 {
 	if (_cmdPool != VK_NULL_HANDLE)
 	{
+		vkDestroyDescriptorPool(_deviceHandle, _descriptorPool, nullptr);
+		vkDestroyDescriptorSetLayout(_deviceHandle, _descriptorSetLayout, nullptr);
+		_descriptorSetLayout = VK_NULL_HANDLE;
+
 		for (size_t i = 0; i < _numFramesInFlight; i++)
 		{
 			vkDestroySemaphore(_deviceHandle, _renderFinishedSemaphores[i], nullptr);
@@ -116,6 +211,7 @@ void CommandPool::record_render_pass(
 	VkFramebuffer frameBuffer, 
 	VkExtent2D extent, 
 	VkPipeline pipeline, 
+	VkPipelineLayout pipelineLayout,
 	VkBuffer* pVertexBuffers, 
 	VkBuffer indexBuffer, 
 	const std::vector<uint16_t>& indices
@@ -154,6 +250,7 @@ void CommandPool::record_render_pass(
 	vkCmdBindVertexBuffers(_cmdBuffers[_currentFrameNum], 0, 1, pVertexBuffers, offsets);
 	vkCmdBindIndexBuffer(_cmdBuffers[_currentFrameNum], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
+	vkCmdBindDescriptorSets(_cmdBuffers[_currentFrameNum], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &_descriptorSets[_currentFrameNum], 0, nullptr);
 	vkCmdDrawIndexed(_cmdBuffers[_currentFrameNum], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(_cmdBuffers[_currentFrameNum]);
@@ -174,6 +271,16 @@ void CommandPool::submit_to_queue(VkQueue queue)
 	{
 		throw std::runtime_error("Failed to submit command buffer");
 	}
+}
+
+void CommandPool::update_ubo(glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+{
+	_UBO ubo{
+		model,
+		view,
+		projection
+	};
+	memcpy(_uniBufMappedMem[_currentFrameNum], &ubo, sizeof(ubo));
 }
 
 
@@ -247,4 +354,43 @@ void CommandPool::_configure_queue_submission(VkSubmitInfo* pCreateInfo, VkPipel
 
 	pCreateInfo->signalSemaphoreCount = 1;
 	pCreateInfo->pSignalSemaphores = &_renderFinishedSemaphores[_currentFrameNum];
+}
+
+void CommandPool::_configure_descriptor_pool(VkDescriptorPoolCreateInfo* pCreateInfo, VkDescriptorPoolSize* pSizeInfo) const
+{
+	memset(pSizeInfo, 0, sizeof(VkDescriptorPoolSize));
+	pSizeInfo->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	pSizeInfo->descriptorCount = static_cast<uint32_t>(_numFramesInFlight);
+
+	memset(pCreateInfo, 0, sizeof(VkDescriptorPoolCreateInfo));
+	pCreateInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	pCreateInfo->poolSizeCount = 1;
+	pCreateInfo->pPoolSizes = pSizeInfo;
+	pCreateInfo->maxSets = static_cast<uint32_t>(_numFramesInFlight);
+}
+
+void CommandPool::_configure_descriptor_set_alloc(VkDescriptorSetAllocateInfo* pAllocInfo, const std::vector<VkDescriptorSetLayout>& setLayouts) const
+{
+	memset(pAllocInfo, 0, sizeof(VkDescriptorSetAllocateInfo));
+	pAllocInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	pAllocInfo->descriptorPool = _descriptorPool;
+	pAllocInfo->descriptorSetCount = static_cast<uint32_t>(_numFramesInFlight);
+	pAllocInfo->pSetLayouts = setLayouts.data();
+}
+
+void CommandPool::_configure_descriptor_set(VkWriteDescriptorSet* pWriteInfo, VkDescriptorBufferInfo* pBufInfo, VkBuffer buffer, VkDescriptorSet descriptorSet) const
+{
+	memset(pBufInfo, 0, sizeof(VkDescriptorBufferInfo));
+	pBufInfo->buffer = buffer;
+	pBufInfo->offset = 0;
+	pBufInfo->range = sizeof(_UBO);
+
+	memset(pWriteInfo, 0, sizeof(VkWriteDescriptorSet));
+	pWriteInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	pWriteInfo->dstSet = descriptorSet;
+	pWriteInfo->dstBinding = 0;
+	pWriteInfo->dstArrayElement = 0;
+	pWriteInfo->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	pWriteInfo->descriptorCount = 1;
+	pWriteInfo->pBufferInfo = pBufInfo;
 }

@@ -4,6 +4,10 @@
 #include <iterator>
 #include <iostream>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "VulkanInstance.h"
 
 /*
@@ -66,7 +70,7 @@ void VulkanClient::init(const std::vector<const char*>& deviceExtensions)
 		_swapChains[i].init_framebuffers(_pipelines[i].render_pass());
 	}
 
-	_create_command_pools();
+	_create_command_pools(); 
 	_create_buffers();
 }
 
@@ -220,6 +224,14 @@ void VulkanClient::_create_swap_chains()
 	}
 }
 
+void VulkanClient::_create_command_pools()
+{
+	for (size_t i = 0; i < _windows.size(); ++i)
+	{
+		_commandPools.push_back(CommandPool(_device, _device.queue_family_info()));
+	}
+}
+
 void VulkanClient::_create_graphics_pipelines()
 {
 	std::vector<Shader> loadedShaders;
@@ -228,19 +240,14 @@ void VulkanClient::_create_graphics_pipelines()
 		loadedShaders.push_back(Shader(shaderToLoad.first, shaderToLoad.second, _device));
 	}
 
-	for (const auto& swapChain : _swapChains)
+	for (size_t i = 0; i < _windows.size(); ++i)
 	{
+		const auto& swapChain = _swapChains[i];
 		_pipelines.push_back(GraphicsPipeline(_device, swapChain, loadedShaders));
 	}
 }
 
-void VulkanClient::_create_command_pools()
-{
-	for (size_t i = 0; i < _windows.size(); ++i)
-	{
-		_commandPools.push_back(CommandPool(_device, _device.queue_family_info()));
-	}
-}
+
 
 void VulkanClient::_create_buffers()
 {
@@ -255,11 +262,11 @@ void VulkanClient::_create_buffers()
 		auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
 
 		_vertexBuffers.push_back(Buffer(_device, Buffer::Type::VERTEX, vertexBufSize));
-		vertexStagingBuf.map_host_data(_meshes[0].vertex_data());
+		vertexStagingBuf.copy_to_mapped_mem(_meshes[0].vertex_data());
 		vertexStagingBuf.copy_to(_vertexBuffers[i], cmdPool, graphicsQueue);
 
 		_indexBuffers.push_back(Buffer(_device, Buffer::Type::INDEX, indexBufSize));
-		indexStagingBuf.map_host_data(_meshes[0].index_data());
+		indexStagingBuf.copy_to_mapped_mem(_meshes[0].index_data());
 		indexStagingBuf.copy_to(_indexBuffers[i], cmdPool, graphicsQueue);
 	}
 }
@@ -290,6 +297,21 @@ void VulkanClient::_render_frames(
 			continue;
 		}
 
+		// UBO test
+		auto extent = swapChain.surface_extent();
+
+		static auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+
+		auto model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		auto view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		auto proj = glm::perspective(glm::radians(45.0f), extent.width / (float)extent.height, 0.1f, 10.0f);
+		proj[1][1] *= -1;
+		cmdPool.update_ubo(model, view, proj);
+
 		// 4) Reset fences and record render pass command
 		VkBuffer vertexBuffers[] = {vertexBuffer.handle()};
 		cmdPool.reset_fences();
@@ -298,6 +320,7 @@ void VulkanClient::_render_frames(
 			swapChain.frame_buffer_at(imageIndex),
 			swapChain.surface_extent(),
 			pipeline.handle(),
+			pipeline.layout_handle(),
 			vertexBuffers,
 			indexBuffer.handle(),
 			_meshes[0].indices()
