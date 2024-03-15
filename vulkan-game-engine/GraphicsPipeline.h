@@ -129,7 +129,7 @@ private:
 	*/
 	void _configure_vertex_input(
 		VkPipelineVertexInputStateCreateInfo* pCreateInfo,
-		const std::array<VkVertexInputAttributeDescription, 2>& attributeDescriptions,
+		const std::array<VkVertexInputAttributeDescription, 3>& attributeDescriptions,
 		VkVertexInputBindingDescription bindingDescription
 	) const;
 

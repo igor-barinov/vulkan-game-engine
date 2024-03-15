@@ -157,7 +157,7 @@ void GraphicsPipeline::_configure_shader_stage(VkPipelineShaderStageCreateInfo* 
 
 void GraphicsPipeline::_configure_vertex_input(
 	VkPipelineVertexInputStateCreateInfo* pCreateInfo, 
-	const std::array<VkVertexInputAttributeDescription, 2>& attributeDescriptions,
+	const std::array<VkVertexInputAttributeDescription, 3>& attributeDescriptions,
 	VkVertexInputBindingDescription bindingDescription
 ) const
 {

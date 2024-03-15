@@ -172,23 +172,6 @@ void Buffer::_create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags memP
 * PRIVATE CONST METHOD DEFINITIONS
 */
 
-uint32_t Buffer::_find_memory_type(uint32_t typeMask, VkMemoryPropertyFlags memPropFlags) const
-{
-	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(_physicalDeviceHandle, &memProperties);
-
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
-	{
-		if ((typeMask & (1 << i)) && 
-			(memProperties.memoryTypes[i].propertyFlags & memPropFlags) == memPropFlags) 
-		{
-			return i;
-		}
-	}
-
-	throw std::runtime_error("Failed to find memory type for buffer");
-}
-
 void Buffer::_configure_buffer(VkBufferCreateInfo* pCreateInfo, VkBufferUsageFlags usage) const
 {
 	memset(pCreateInfo, 0, sizeof(VkBufferCreateInfo));
@@ -203,5 +186,5 @@ void Buffer::_configure_mem_alloc(VkMemoryAllocateInfo* pAllocInfo, VkMemoryRequ
 	memset(pAllocInfo, 0, sizeof(VkMemoryAllocateInfo));
 	pAllocInfo->sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	pAllocInfo->allocationSize = memRequirements.size;
-	pAllocInfo->memoryTypeIndex = _find_memory_type(memRequirements.memoryTypeBits, memPropFlags);
+	pAllocInfo->memoryTypeIndex = VulkanDevice::find_memory_type(_physicalDeviceHandle, memRequirements.memoryTypeBits, memPropFlags);
 }

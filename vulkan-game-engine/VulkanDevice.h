@@ -33,8 +33,15 @@ public:
 
 		swap(deviceA._logicalDevice, deviceB._logicalDevice);
 		swap(deviceA._physicalDevice, deviceB._physicalDevice);
+		swap(deviceA._physicalProps, deviceB._physicalProps);
 		swap(deviceA._queueFamilyInfo, deviceB._queueFamilyInfo);
 	}
+
+	/*
+	* PUBLIC STATIC METHODS
+	*/
+
+	static uint32_t find_memory_type(VkPhysicalDevice physicalDevice, uint32_t typeMask, VkMemoryPropertyFlags memPropFlags);
 
 
 
@@ -78,6 +85,10 @@ public:
 	*/
 	inline const std::vector<const char*>& extensions() const { return _extensions; }
 
+	/* @brief Returns the physical device properties
+	*/
+	inline VkPhysicalDeviceProperties physical_properties() const { return _physicalProps; }
+
 private:
 
 	/*
@@ -91,6 +102,10 @@ private:
 	/* Handle to physical device
 	*/
 	VkPhysicalDevice _physicalDevice;
+
+	/* Physical device properties
+	*/
+	VkPhysicalDeviceProperties _physicalProps;
 
 	/* Queue family info for device
 	*/

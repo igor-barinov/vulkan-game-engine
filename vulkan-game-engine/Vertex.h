@@ -23,7 +23,7 @@ public:
 	* @param g Green color value
 	* @param b Blue color value
 	*/
-	Vertex(float x, float y, float r, float g, float b);
+	Vertex(float x, float y, float r, float g, float b, float textureX, float textureY);
 
 
 
@@ -37,7 +37,7 @@ public:
 
 	/* @brief Returns attribute descriptions used for vertex input pipeline stage
 	*/
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
+	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
 
 private:
 
@@ -52,5 +52,9 @@ private:
 	/* Color vector
 	*/
 	glm::vec3 _color;
+
+	/* Texture coordinates vector
+	*/
+	glm::vec2 _texCoord;
 };
 

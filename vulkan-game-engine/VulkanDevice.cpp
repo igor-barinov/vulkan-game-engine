@@ -2,12 +2,38 @@
 #include <stdexcept>
 
 /*
+* STATIC METHOD DEFINITIONS
+*/
+
+uint32_t VulkanDevice::find_memory_type(VkPhysicalDevice physicalDevice, uint32_t typeMask, VkMemoryPropertyFlags memPropFlags)
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+    {
+        if ((typeMask & (1 << i)) &&
+            (memProperties.memoryTypes[i].propertyFlags & memPropFlags) == memPropFlags)
+        {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("Failed to find memory type for buffer");
+}
+
+
+
+
+
+/*
 * CTORS / ASSIGNMENT DEFINITIONS
 */
 
 VulkanDevice::VulkanDevice()
     : _logicalDevice(VK_NULL_HANDLE),
     _physicalDevice(VK_NULL_HANDLE),
+    _physicalProps({}),
     _queueFamilyInfo({}),
     _extensions({})
 {
@@ -21,6 +47,8 @@ VulkanDevice::VulkanDevice(VkPhysicalDevice physicalDevice, const QueueFamilyInf
 {
     VkDeviceCreateInfo createInfo{};
     VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.samplerAnisotropy = true;
+
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     _configure_logical_device(&createInfo, &deviceFeatures, queueCreateInfos, validationLayers);
 
@@ -28,12 +56,15 @@ VulkanDevice::VulkanDevice(VkPhysicalDevice physicalDevice, const QueueFamilyInf
         throw std::runtime_error("Failed to create logical device");
     }
 
+    vkGetPhysicalDeviceProperties(physicalDevice, &_physicalProps);
+
     _queueFamilyInfo.load_handles(_logicalDevice);
 }
 
 VulkanDevice::VulkanDevice(const VulkanDevice& other)
     : _logicalDevice(other._logicalDevice), 
     _physicalDevice(other._physicalDevice), 
+    _physicalProps(other._physicalProps),
     _queueFamilyInfo(other._queueFamilyInfo)
 {
 }

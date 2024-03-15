@@ -76,7 +76,7 @@
     <ClCompile Include="Texture.cpp">
       <Filter>Shading</Filter>
     </ClCompile>
-    <ClCompile Include="PNGReader.cpp">
+    <ClCompile Include="PNGImage.cpp">
       <Filter>IO</Filter>
     </ClCompile>
   </ItemGroup>
@@ -120,7 +120,7 @@
     <ClInclude Include="Texture.h">
       <Filter>Shading</Filter>
     </ClInclude>
-    <ClInclude Include="PNGReader.h">
+    <ClInclude Include="PNGImage.h">
       <Filter>IO</Filter>
     </ClInclude>
   </ItemGroup>

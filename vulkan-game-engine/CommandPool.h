@@ -47,6 +47,7 @@ public:
 		swap(poolA._descriptorPool, poolB._descriptorPool);
 		swap(poolA._descriptorSetLayout, poolB._descriptorSetLayout);
 		swap(poolA._descriptorSets, poolB._descriptorSets);
+		swap(poolA._textureSampler, poolB._textureSampler);
 		swap(poolA._deviceHandle, poolB._deviceHandle);
 	}
 
@@ -73,7 +74,7 @@ public:
 	* @param queueFamilyInfo Info containing queue handles
 	* @param maxFramesInFlight Maximum number of frames in flight
 	*/
-	CommandPool(const VulkanDevice& device, const QueueFamilyInfo& queueFamilyInfo, int maxFramesInFlight = DEFAULT_FRAMES_IN_FLIGHT);
+	CommandPool(const VulkanDevice& device, VkImageView textureImageView, int maxFramesInFlight = DEFAULT_FRAMES_IN_FLIGHT);
 	CommandPool(const CommandPool& other);
 	CommandPool(CommandPool&& other) noexcept;
 	CommandPool& operator=(CommandPool other);
@@ -102,6 +103,14 @@ public:
 		VkBuffer indexBuffer,
 		const std::vector<uint16_t>& indices
 	);
+
+	/* @brief Records a command for transitioning from one image layout to another
+	*/
+	void record_image_layout_transition(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkQueue graphicsQueue);
+
+	/* @brief Records a command for copying from a staging buffer to an image object
+	*/
+	void record_copy_image_to_buffer(VkBuffer buffer, VkImage image, uint32_t imgWidth, uint32_t imgHeight, VkQueue graphicsQueue);
 
 	/* @brief Submits command buffer for current frame to the given queue
 	*/
@@ -213,6 +222,10 @@ private:
 	*/
 	std::vector<VkDescriptorSet> _descriptorSets;
 
+	/* Handle to texture sampler object
+	*/
+	VkSampler _textureSampler;
+
 	/* Handle to device being used
 	*/
 	VkDevice _deviceHandle;
@@ -223,12 +236,26 @@ private:
 	* PRIVATE STATIC METHODS
 	*/
 
-	/* @brief Fills struct with necessary info for creating descriptor set layout
+	/* @brief Fills struct with necessary info for creating UBO descriptor set layout
 	*
 	* @param[out] pCreateInfo The struct to fill
-	* @param[out] pLayoutBinding Pointer to layout binding info
 	*/
-	static void _configure_descriptor_set_layout(VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkDescriptorSetLayoutBinding* pLayoutBinding);
+	static void _configure_ubo_layout_binding(VkDescriptorSetLayoutBinding* pBinding);
+
+	/* @brief Fills struct with necessary info for creating texture sampler descriptor set layout
+	*
+	* @param[out] pCreateInfo The struct to fill
+	*/
+	static void _configure_texture_sampler_layout_binding(VkDescriptorSetLayoutBinding* pBinding);
+
+	/* @brief Fills struct with necessary info for creating descriptor set layouts
+	*
+	* @param[out] pCreateInfo The struct to fill
+	* @param bindings List of layout bindings to use
+	*/
+	static void _configure_descriptor_set_layouts(VkDescriptorSetLayoutCreateInfo* pCreateInfo, const std::vector<VkDescriptorSetLayoutBinding>& bindings);
+
+
 
 
 
@@ -267,6 +294,9 @@ private:
 		VkExtent2D extent
 	) const;
 
+	VkCommandBuffer _begin_one_time_command() const;
+	void _end_one_time_command(VkCommandBuffer cmdBuffer, VkQueue queue) const;
+
 	/* @brief Fills struct with necessary info for submitting a command to a queue
 	* 
 	* @param[out] pCreateInfo The struct to fill
@@ -279,7 +309,7 @@ private:
 	* @param[out] pCreateInfo The struct to fill
 	* @param[out] pSizeInfo Pointer to pool size info
 	*/
-	void _configure_descriptor_pool(VkDescriptorPoolCreateInfo* pCreateInfo, VkDescriptorPoolSize* pSizeInfo) const;
+	void _configure_descriptor_pool(VkDescriptorPoolCreateInfo* pCreateInfo, const std::vector<VkDescriptorPoolSize>& poolSizes) const;
 
 	/* @brief Fills struct with necessary info for allocating descriptor set
 	*
@@ -288,11 +318,27 @@ private:
 	*/
 	void _configure_descriptor_set_alloc(VkDescriptorSetAllocateInfo* pAllocInfo, const std::vector<VkDescriptorSetLayout>& setLayouts) const;
 
-	/* @brief Fills struct with necessary info for writing to descriptor set
+	/* @brief Fills struct with necessary info for creating UBO descriptor set
 	*
-	* @param[out] pWriteInfo The struct to fill
-	* @param[out] VkDescriptorBufferInfo Pointer to descriptor buffer info
+	* @param[out] pBufInfo The struct to fill
+	* @param uniformBuffer Handle to uniform buffer
+	* @param descriptorSet Handle to descriptor set
 	*/
-	void _configure_descriptor_set(VkWriteDescriptorSet* pWriteInfo, VkDescriptorBufferInfo* pBufInfo, VkBuffer buffer, VkDescriptorSet descriptorSet) const;
+	VkWriteDescriptorSet _configure_ubo_descriptor_set(VkDescriptorBufferInfo* pBufInfo, VkBuffer uniformBuffer, VkDescriptorSet descriptorSet) const;
+
+	/* @brief Fills struct with necessary info for creating a texture sampler descriptor set
+	*
+	* @param[out] pImageInfo The struct to fill
+	* @param imageView Handle to image view used for sampling
+	* @param descriptorSet Handle to descriptor set
+	*/
+	VkWriteDescriptorSet _configure_sampler_descriptor_set(VkDescriptorImageInfo* pImageInfo, VkImageView imageView, VkDescriptorSet descriptorSet) const;
+
+	/* @brief Fills struct with necessary info for creating a texture sampler
+	*
+	* @param[out] pCreateInfo The struct to fill
+	* @param VkPhysicalDeviceProperties Properties of device being used
+	*/
+	void _configure_texture_sampler(VkSamplerCreateInfo* pCreateInfo, VkPhysicalDeviceProperties deviceProps) const;
 
 };

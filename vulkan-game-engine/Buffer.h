@@ -150,10 +150,6 @@ private:
 	* PRIVATE CONST METHODS
 	*/
 
-	/* @brief Retrieves the memory type for the given mask and flags
-	*/
-	uint32_t _find_memory_type(uint32_t typeMask, VkMemoryPropertyFlags memPropFlags) const;
-
 	/* @brief Fills struct with necessary info for creating a buffer
 	*/
 	void _configure_buffer(VkBufferCreateInfo* pCreateInfo, VkBufferUsageFlags usage) const;

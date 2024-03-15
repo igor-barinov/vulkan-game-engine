@@ -11,14 +11,10 @@
 #include "VulkanClient.h"
 #include "VulkanInstance.h"
 
-#include "PNGReader.h"
+#include "PNGImage.h"
 
 int main(int argc, char* argv[])
 {
-
-
-    PNGReader reader("test.png");
-
     VulkanInstance& vulkan = VulkanInstance::instance();
     VulkanClient client;
 

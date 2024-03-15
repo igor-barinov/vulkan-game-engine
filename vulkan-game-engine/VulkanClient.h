@@ -14,6 +14,7 @@
 #include "CommandPool.h"
 #include "Buffer.h"
 #include "Mesh.h"
+#include "Texture.h"
 
 /*
 * Class describing a client for rendering windows
@@ -116,6 +117,8 @@ private:
 	*/
 	std::vector<Mesh> _meshes;
 
+	Texture _tex;
+
 
 
 	/*
@@ -133,6 +136,10 @@ private:
 	/* @brief Checks if the given device supports swap chains with all surfaces
 	*/
 	bool _device_supports_swap_chain(VkPhysicalDevice physicalDevice) const;
+
+	/* @brief Checks if the given device supports certain features
+	*/
+	bool _device_supports_features(VkPhysicalDevice physicalDevice) const;
 
 	/* @brief Selects a physical device that meets all requirements
 	*

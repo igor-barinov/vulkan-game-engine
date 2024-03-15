@@ -27,10 +27,10 @@ VulkanClient::VulkanClient()
 {
 	_meshes = {
 		Mesh({
-			Vertex(-0.5, -0.5, 1.0, 0.0, 0.0),
-			Vertex(0.5, -0.5, 0.0, 1.0, 0.0),
-			Vertex(0.5, 0.5, 0.0, 0.0, 1.0),
-			Vertex(-0.5, 0.5, 1.0, 1.0, 1.0)
+			Vertex(-0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0),
+			Vertex(0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0),
+			Vertex(0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0),
+			Vertex(-0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0)
 		},
 		{0, 1, 2, 2, 3, 0})
 	};
@@ -69,6 +69,10 @@ void VulkanClient::init(const std::vector<const char*>& deviceExtensions)
 	{
 		_swapChains[i].init_framebuffers(_pipelines[i].render_pass());
 	}
+
+	CommandPool tmpPool(_device, VK_NULL_HANDLE);
+	PNGImage texture("test.png");
+	_tex = Texture(texture, _device, tmpPool);
 
 	_create_command_pools(); 
 	_create_buffers();
@@ -166,6 +170,14 @@ bool VulkanClient::_device_supports_swap_chain(VkPhysicalDevice physicalDevice) 
 	return true;
 }
 
+bool VulkanClient::_device_supports_features(VkPhysicalDevice physicalDevice) const
+{
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
+	
+	return supportedFeatures.samplerAnisotropy;
+}
+
 VkPhysicalDevice VulkanClient::_pick_physical_device(const std::vector<const char*>& deviceExtensions) const
 {
 	auto& vulkan = VulkanInstance::instance();
@@ -176,6 +188,7 @@ VkPhysicalDevice VulkanClient::_pick_physical_device(const std::vector<const cha
 		if (!_device_compatible_with_surfaces(device)) { continue; }
 		if (!_device_supports_extensions(device, deviceExtensions)) { continue; }
 		if (!_device_supports_swap_chain(device)) { continue; }
+		if (!_device_supports_features(device)) { continue; }
 		
 		return device;
 	}
@@ -228,7 +241,7 @@ void VulkanClient::_create_command_pools()
 {
 	for (size_t i = 0; i < _windows.size(); ++i)
 	{
-		_commandPools.push_back(CommandPool(_device, _device.queue_family_info()));
+		_commandPools.push_back(CommandPool(_device, _tex.get_image_view()));
 	}
 }
 
