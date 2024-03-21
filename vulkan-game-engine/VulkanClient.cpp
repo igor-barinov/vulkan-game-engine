@@ -16,14 +16,8 @@
 
 VulkanClient::VulkanClient()
 	: _device({}),
-	_swapChains({}),
 	_windows({}),
-	_shaderFiles({}),
-	_pipelines({}),
-	_commandPools({}),
-	_stagingBuffers({}),
-	_vertexBuffers({}),
-	_indexBuffers({})
+	_shaderFiles({})
 {
 	_meshes = {
 		Mesh({
@@ -62,39 +56,31 @@ void VulkanClient::add_shader(const std::string& filepath, Shader::Type shaderTy
 void VulkanClient::init(const std::vector<const char*>& deviceExtensions)
 {
 	_create_logical_device(deviceExtensions);
-	_create_swap_chains();
-	_create_graphics_pipelines();
 
-	for (size_t i = 0; i < _swapChains.size(); ++i)
-	{
-		_swapChains[i].init_framebuffers(_pipelines[i].render_pass());
-	}
-
-	CommandPool tmpPool(_device, VK_NULL_HANDLE);
+	CommandPool tmpPool(_device);
 	PNGImage texture("test.png");
 	_tex = Texture(texture, _device, tmpPool);
 
-	_create_command_pools(); 
-	_create_buffers();
+	auto shaders = _load_shaders();
+	_create_renderers(shaders);
 }
 
 void VulkanClient::run()
 {
-	_render_frames(_windows[0], _swapChains[0], _pipelines[0], _commandPools[0], _vertexBuffers[0], _indexBuffers[0]);
+
+	_renderers[0].render();
+
 	/**
 	for (size_t i = 0; i < _windows.size(); ++i)
 	{
-		auto task = [this](Window& win, SwapChain& swapChain, GraphicsPipeline& pipeline, CommandPool& cmdPool) {
-			_render_frames(win, swapChain, pipeline, cmdPool);
+		auto task = [this](VulkanRenderer& renderer) {
+			renderer.render();
 			};
 
 		_windowFutures.push_back(std::async(
 			std::launch::async,
 			task,
-			std::ref(_windows[i]),
-			std::ref(_swapChains[i]),
-			std::ref(_pipelines[i]),
-			std::ref(_commandPools[i])
+			std::ref(_renderers[i])
 		));
 	}
 	//*/
@@ -216,175 +202,30 @@ void VulkanClient::_create_logical_device(const std::vector<const char*>& device
 
 	auto queueFamilyInfo = QueueFamilyInfo::info_for(physicalDevice, _windows.front().surface_handle());
 
-	_device = VulkanDevice(physicalDevice, queueFamilyInfo, deviceExtensions, validationLayers);
+	_device = Device(physicalDevice, queueFamilyInfo, deviceExtensions, validationLayers);
 }
 
-void VulkanClient::_create_swap_chains()
+std::vector<Shader> VulkanClient::_load_shaders()
 {
-	auto formatFilter = [](VkSurfaceFormatKHR format) 
-		{
-			return format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-		};
-
-	auto presentModeFilter = [](VkPresentModeKHR mode)
-		{
-			return mode == VK_PRESENT_MODE_MAILBOX_KHR;
-		};
-
-	for (const auto& win : _windows)
+	std::vector<Shader> shaders;
+	for (auto shaderInfo : _shaderFiles)
 	{
-		_swapChains.push_back(SwapChain(_device, win, formatFilter, presentModeFilter));
+		shaders.push_back(Shader(shaderInfo.first, shaderInfo.second, _device));
 	}
+
+	return shaders;
 }
 
-void VulkanClient::_create_command_pools()
+void VulkanClient::_create_renderers(const std::vector<Shader>& shaders)
 {
 	for (size_t i = 0; i < _windows.size(); ++i)
 	{
-		_commandPools.push_back(CommandPool(_device, _tex.get_image_view()));
+		_renderers.push_back(VulkanRenderer(
+			_device,
+			_windows[i],
+			shaders,
+			_meshes[0],
+			_tex
+		));
 	}
-}
-
-void VulkanClient::_create_graphics_pipelines()
-{
-	std::vector<Shader> loadedShaders;
-	for (const auto& shaderToLoad : _shaderFiles)
-	{
-		loadedShaders.push_back(Shader(shaderToLoad.first, shaderToLoad.second, _device));
-	}
-
-	for (size_t i = 0; i < _windows.size(); ++i)
-	{
-		const auto& swapChain = _swapChains[i];
-		_pipelines.push_back(GraphicsPipeline(_device, swapChain, loadedShaders));
-	}
-}
-
-
-
-void VulkanClient::_create_buffers()
-{
-	auto vertexBufSize = _meshes[0].size_of_vertices();
-	auto indexBufSize = _meshes[0].size_of_indices();
-	Buffer vertexStagingBuf(_device, Buffer::Type::STAGING, vertexBufSize);
-	Buffer indexStagingBuf(_device, Buffer::Type::STAGING, indexBufSize);
-
-	for (size_t i = 0; i < _windows.size(); ++i)
-	{
-		auto cmdPool = _commandPools[i].handle();
-		auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
-
-		_vertexBuffers.push_back(Buffer(_device, Buffer::Type::VERTEX, vertexBufSize));
-		vertexStagingBuf.copy_to_mapped_mem(_meshes[0].vertex_data());
-		vertexStagingBuf.copy_to(_vertexBuffers[i], cmdPool, graphicsQueue);
-
-		_indexBuffers.push_back(Buffer(_device, Buffer::Type::INDEX, indexBufSize));
-		indexStagingBuf.copy_to_mapped_mem(_meshes[0].index_data());
-		indexStagingBuf.copy_to(_indexBuffers[i], cmdPool, graphicsQueue);
-	}
-}
-
-void VulkanClient::_render_frames(
-	Window& window, 
-	SwapChain& swapChain, 
-	GraphicsPipeline& pipeline, 
-	CommandPool& cmdPool, 
-	Buffer& vertexBuffer, 
-	Buffer& indexBuffer
-)
-{
-	while (!window.should_close())
-	{
-		// 1) Poll for events
-		window.poll();
-
-		// 2) Wait for fences
-		cmdPool.wait_for_fences();
-
-		// 3) Get next image from swap chain
-		bool swapChainIsOutofDate = false;
-		auto imageIndex = swapChain.get_next_image(cmdPool.image_availability_semaphore(), swapChainIsOutofDate);
-		if (swapChainIsOutofDate)
-		{
-			_recreate_swap_chain(window, swapChain, pipeline);
-			continue;
-		}
-
-		// UBO test
-		auto extent = swapChain.surface_extent();
-
-		static auto startTime = std::chrono::high_resolution_clock::now();
-
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-
-		auto model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		auto view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		auto proj = glm::perspective(glm::radians(45.0f), extent.width / (float)extent.height, 0.1f, 10.0f);
-		proj[1][1] *= -1;
-		cmdPool.update_ubo(model, view, proj);
-
-		// 4) Reset fences and record render pass command
-		VkBuffer vertexBuffers[] = {vertexBuffer.handle()};
-		cmdPool.reset_fences();
-		cmdPool.record_render_pass(
-			pipeline.render_pass(),
-			swapChain.frame_buffer_at(imageIndex),
-			swapChain.surface_extent(),
-			pipeline.handle(),
-			pipeline.layout_handle(),
-			vertexBuffers,
-			indexBuffer.handle(),
-			_meshes[0].indices()
-		);
-		
-		// 5) Submit command
-		queueMtx.lock();
-		auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
-		cmdPool.submit_to_queue(graphicsQueue);
-		queueMtx.unlock();
-
-		// 6) Present image to swap chain
-		queueMtx.lock();
-		auto presentQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Present);
-		auto waitSemaphore = cmdPool.render_finished_semaphore();
-		swapChainIsOutofDate = swapChain.present_image(presentQueue, &waitSemaphore, &imageIndex);
-		queueMtx.unlock();
-		if (swapChainIsOutofDate || window.was_resized())
-		{
-			window.reset_resize_status();
-			_recreate_swap_chain(window, swapChain, pipeline);
-		}
-
-		// 7) Update command pool frame counter
-		cmdPool.increment_frame_counter();
-	}
-
-	vkDeviceWaitIdle(_device.handle());
-}
-
-void VulkanClient::_recreate_swap_chain(Window& window, SwapChain& swapChain, GraphicsPipeline& pipeline)
-{
-	while (window.is_minimized()) 
-	{
-		window.idle();
-	}
-
-	vkDeviceWaitIdle(_device.handle());
-
-	swapChain.~SwapChain();
-
-	auto formatFilter = [](VkSurfaceFormatKHR format)
-		{
-			return format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-		};
-
-	auto presentModeFilter = [](VkPresentModeKHR mode)
-		{
-			return mode == VK_PRESENT_MODE_MAILBOX_KHR;
-		};
-
-	swapChain = SwapChain(_device, window, formatFilter, presentModeFilter);
-	swapChain.init_framebuffers(pipeline.render_pass());
 }

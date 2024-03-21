@@ -144,7 +144,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="CommandBufferPool.cpp" />
     <ClCompile Include="CommandPool.cpp" />
+    <ClCompile Include="DescriptorPool.cpp" />
     <ClCompile Include="GraphicsPipeline.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -153,15 +155,20 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SwapChain.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureSampler.cpp" />
+    <ClCompile Include="UBO.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="VulkanClient.cpp" />
-    <ClCompile Include="VulkanDevice.cpp" />
+    <ClCompile Include="Device.cpp" />
     <ClCompile Include="VulkanInstance.cpp" />
+    <ClCompile Include="VulkanRenderer.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="CommandBufferPool.h" />
     <ClInclude Include="CommandPool.h" />
+    <ClInclude Include="DescriptorPool.h" />
     <ClInclude Include="GraphicsPipeline.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PNGImage.h" />
@@ -169,10 +176,13 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SwapChain.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureSampler.h" />
+    <ClInclude Include="UBO.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanClient.h" />
-    <ClInclude Include="VulkanDevice.h" />
+    <ClInclude Include="Device.h" />
     <ClInclude Include="VulkanInstance.h" />
+    <ClInclude Include="VulkanRenderer.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

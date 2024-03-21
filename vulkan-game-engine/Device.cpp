@@ -1,11 +1,11 @@
-#include "VulkanDevice.h"
+#include "Device.h"
 #include <stdexcept>
 
 /*
 * STATIC METHOD DEFINITIONS
 */
 
-uint32_t VulkanDevice::find_memory_type(VkPhysicalDevice physicalDevice, uint32_t typeMask, VkMemoryPropertyFlags memPropFlags)
+uint32_t Device::find_memory_type(VkPhysicalDevice physicalDevice, uint32_t typeMask, VkMemoryPropertyFlags memPropFlags)
 {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -30,7 +30,7 @@ uint32_t VulkanDevice::find_memory_type(VkPhysicalDevice physicalDevice, uint32_
 * CTORS / ASSIGNMENT DEFINITIONS
 */
 
-VulkanDevice::VulkanDevice()
+Device::Device()
     : _logicalDevice(VK_NULL_HANDLE),
     _physicalDevice(VK_NULL_HANDLE),
     _physicalProps({}),
@@ -39,7 +39,7 @@ VulkanDevice::VulkanDevice()
 {
 }
 
-VulkanDevice::VulkanDevice(VkPhysicalDevice physicalDevice, const QueueFamilyInfo& queueFamilyInfo, const std::vector<const char*>& deviceExtensions, const std::vector<const char*>& validationLayers)
+Device::Device(VkPhysicalDevice physicalDevice, const QueueFamilyInfo& queueFamilyInfo, const std::vector<const char*>& deviceExtensions, const std::vector<const char*>& validationLayers)
 	: _logicalDevice(VK_NULL_HANDLE),
     _physicalDevice(physicalDevice),
 	_queueFamilyInfo(queueFamilyInfo),
@@ -61,7 +61,7 @@ VulkanDevice::VulkanDevice(VkPhysicalDevice physicalDevice, const QueueFamilyInf
     _queueFamilyInfo.load_handles(_logicalDevice);
 }
 
-VulkanDevice::VulkanDevice(const VulkanDevice& other)
+Device::Device(const Device& other)
     : _logicalDevice(other._logicalDevice), 
     _physicalDevice(other._physicalDevice), 
     _physicalProps(other._physicalProps),
@@ -69,19 +69,19 @@ VulkanDevice::VulkanDevice(const VulkanDevice& other)
 {
 }
 
-VulkanDevice::VulkanDevice(VulkanDevice&& other) noexcept
-    : VulkanDevice()
+Device::Device(Device&& other) noexcept
+    : Device()
 {
     swap(*this, other);
 }
 
-VulkanDevice& VulkanDevice::operator=(VulkanDevice other)
+Device& Device::operator=(Device other)
 {
     swap(*this, other);
     return *this;
 }
 
-VulkanDevice::~VulkanDevice()
+Device::~Device()
 {
     vkDestroyDevice(_logicalDevice, nullptr);
 }
@@ -94,7 +94,7 @@ VulkanDevice::~VulkanDevice()
 * PRIVATE CONST METHOD DEFINITIONS
 */
 
-void VulkanDevice::_configure_logical_device(
+void Device::_configure_logical_device(
     VkDeviceCreateInfo* pDeviceCreateInfo, 
     VkPhysicalDeviceFeatures* pDeviceFeatures,
     std::vector<VkDeviceQueueCreateInfo>& queueCreateInfos, 

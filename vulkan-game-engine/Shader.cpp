@@ -15,7 +15,7 @@ Shader::Shader()
 {
 }
 
-Shader::Shader(const std::string& filepath, Type shaderType, const VulkanDevice& device)
+Shader::Shader(const std::string& filepath, Type shaderType, const Device& device)
     : _module(VK_NULL_HANDLE),
     _shaderType(Type::NONE),
     _shaderCode({}),

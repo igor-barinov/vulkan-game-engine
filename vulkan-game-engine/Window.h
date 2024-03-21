@@ -44,6 +44,7 @@ public:
 	* CTORS / ASSIGNMENT
 	*/
 
+	Window();
 	/*
 	* @param title Title of window
 	* @param width Widht of window in pixels

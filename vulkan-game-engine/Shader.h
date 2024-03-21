@@ -4,7 +4,7 @@
 #include <vector>
 #include <sstream>
 
-#include "VulkanDevice.h"
+#include "Device.h"
 
 /*
 * Class that implements a Vulkan shader
@@ -56,7 +56,7 @@ public:
 	* @param filepath Path to shader file to load
 	* @param device Device being used
 	*/
-	Shader(const std::string& filepath, Type shaderType, const VulkanDevice& device);
+	Shader(const std::string& filepath, Type shaderType, const Device& device);
 	Shader(const Shader& other);
 	Shader(Shader&& other) noexcept;
 	Shader& operator=(Shader other);

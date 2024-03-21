@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-#include "VulkanDevice.h"
+#include "Device.h"
 
 /*
 * Class implementing a Vulkan buffer
@@ -62,7 +62,7 @@ public:
 	* @param bufferType The type of buffer to create
 	* @param bufferSize The size required to allocate buffer
 	*/
-	Buffer(const VulkanDevice& device, Buffer::Type bufferType, size_t bufferSize);
+	Buffer(const Device& device, Buffer::Type bufferType, size_t bufferSize);
 	Buffer(const Buffer& other);
 	Buffer(Buffer&& other) noexcept;
 	Buffer& operator=(Buffer other);

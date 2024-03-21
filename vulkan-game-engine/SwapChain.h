@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "VulkanDevice.h"
+#include "Device.h"
 #include "Window.h"
 
 /*
@@ -58,7 +58,7 @@ public:
 	* @param formatFilterFn Filtering function used to select surface format
 	* @param presentModeFilterFn Filtering functions used to select present mode
 	*/
-	SwapChain(const VulkanDevice& device, const Window& window, FormatFilter formatFilterFn, PresentModeFilter presentModeFilterFn);
+	SwapChain(const Device& device, const Window& window, FormatFilter formatFilterFn, PresentModeFilter presentModeFilterFn);
 	SwapChain(const SwapChain& other);
 	SwapChain(SwapChain&& other) noexcept;
 	SwapChain& operator=(SwapChain other);

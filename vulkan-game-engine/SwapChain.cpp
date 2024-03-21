@@ -56,7 +56,7 @@ SwapChain::SwapChain()
 {
 }
 
-SwapChain::SwapChain(const VulkanDevice& device, const Window& window, FormatFilter formatFilterFn, PresentModeFilter presentModeFilterFn)
+SwapChain::SwapChain(const Device& device, const Window& window, FormatFilter formatFilterFn, PresentModeFilter presentModeFilterFn)
 	: _swapChain(VK_NULL_HANDLE),
     _supportInfo(_SwapChainSupport{}),
 	_imageFormat(VkFormat{}),

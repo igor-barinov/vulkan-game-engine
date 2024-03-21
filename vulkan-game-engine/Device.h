@@ -8,7 +8,7 @@
 /*
 * Class describing physical and logical devices and related queue families
 */
-class VulkanDevice
+class Device
 {
 public:
 
@@ -25,9 +25,9 @@ public:
 	*/
 
 	/*
-	*  @brief Swap implementation for VulkanDevice class
+	*  @brief Swap implementation for Device class
 	*/
-	friend void swap(VulkanDevice& deviceA, VulkanDevice& deviceB)
+	friend void swap(Device& deviceA, Device& deviceB)
 	{
 		using std::swap;
 
@@ -49,7 +49,7 @@ public:
 	* CTORS / ASSIGNMENT
 	*/
 
-	VulkanDevice();
+	Device();
 
 	/*
 	* @param physcialDevice Handle to physical device to creat logical device from
@@ -57,11 +57,11 @@ public:
 	* @param deviceExtensions List of extension names for device to support
 	* @param validationLayers List of validation layer names for device to support
 	*/
-	VulkanDevice(VkPhysicalDevice physicalDevice, const QueueFamilyInfo& queueFamilyInfo, const std::vector<const char*>& deviceExtensions, const std::vector<const char*>& validationLayers = {});
-	VulkanDevice(const VulkanDevice& other);
-	VulkanDevice(VulkanDevice&& other) noexcept;
-	VulkanDevice& operator=(VulkanDevice other);
-	~VulkanDevice();
+	Device(VkPhysicalDevice physicalDevice, const QueueFamilyInfo& queueFamilyInfo, const std::vector<const char*>& deviceExtensions, const std::vector<const char*>& validationLayers = {});
+	Device(const Device& other);
+	Device(Device&& other) noexcept;
+	Device& operator=(Device other);
+	~Device();
 
 
 

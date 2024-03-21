@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-#include "VulkanDevice.h"
+#include "Device.h"
 #include "Buffer.h"
 #include "PNGImage.h"
 #include "CommandPool.h"
@@ -25,13 +25,12 @@ public:
 		swap(texA._imgWidth, texB._imgWidth);
 		swap(texA._imgHeight, texB._imgHeight);
 		swap(texA._imgChannels, texB._imgChannels);
-		swap(texA._stagingBuf, texB._stagingBuf);
 		swap(texA._deviceHandle, texB._deviceHandle);
 		swap(texA._physicalDeviceHandle, texB._physicalDeviceHandle);
 	}
 
 	Texture();
-	Texture(PNGImage& texture, VulkanDevice& device, CommandPool& cmdPool);
+	Texture(PNGImage& texture, Device& device, CommandPool& cmdPool);
 	Texture(const Texture& other);
 	Texture(Texture&& other) noexcept;
 	Texture& operator=(Texture other);
@@ -49,7 +48,6 @@ private:
 	uint32_t _imgWidth;
 	uint32_t _imgHeight;
 	uint32_t _imgChannels;
-	Buffer _stagingBuf;
 	VkDevice _deviceHandle;
 	VkPhysicalDevice _physicalDeviceHandle;
 
@@ -57,5 +55,7 @@ private:
 	void _configure_image_memory(VkMemoryAllocateInfo* pAllocInfo, VkMemoryRequirements requirements, VkMemoryPropertyFlags properties) const;
 	void _configure_image_view(VkImageViewCreateInfo* pCreateInfo) const;
 
-};
+	void _record_image_layout_transition(VkImageLayout oldLayout, VkImageLayout newLayout, const CommandPool& commandPool, VkQueue graphicsQueue);
+	void _record_copy_image_to_buffer(VkBuffer stagingBuffer, const CommandPool& commandPool, VkQueue graphicsQueue);
 
+};

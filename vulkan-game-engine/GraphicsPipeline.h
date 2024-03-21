@@ -7,7 +7,7 @@
 
 #include "Shader.h"
 #include "SwapChain.h"
-#include "CommandPool.h"
+#include "DescriptorPool.h"
 
 /*
 * Class implementing Vulkan graphics pipeline
@@ -52,7 +52,7 @@ public:
 	* @param swapChain Swap chain being used with this pipeline
 	* @param shaders List of shaders to be used
 	*/
-	GraphicsPipeline(const VulkanDevice& device, const SwapChain& swapChain, const std::vector<Shader>& shaders);
+	GraphicsPipeline(const Device& device, const SwapChain& swapChain, const std::vector<Shader>& shaders, const DescriptorPool& descriptors);
 	GraphicsPipeline(const GraphicsPipeline& other);
 	GraphicsPipeline(GraphicsPipeline&& other) noexcept;
 	GraphicsPipeline& operator=(GraphicsPipeline other);

@@ -14,7 +14,7 @@ GraphicsPipeline::GraphicsPipeline()
 {
 }
 
-GraphicsPipeline::GraphicsPipeline(const VulkanDevice& device, const SwapChain& swapChain, const std::vector<Shader>& shaders)
+GraphicsPipeline::GraphicsPipeline(const Device& device, const SwapChain& swapChain, const std::vector<Shader>& shaders, const DescriptorPool& descriptors)
 	: _layout(VK_NULL_HANDLE),
 	_pipeline(VK_NULL_HANDLE),
 	_renderPass(VK_NULL_HANDLE),
@@ -77,7 +77,7 @@ GraphicsPipeline::GraphicsPipeline(const VulkanDevice& device, const SwapChain& 
 	_configure_pipeline_dynamic_state(&dynamicStateInfo, dynamicStates);
 
 	VkPipelineLayoutCreateInfo layoutInfo;
-	auto setLayout = CommandPool::get_descriptor_set_layout(_deviceHandle);
+	auto setLayout = descriptors.descriptor_set_layout();
 	_configure_pipeline_layout(&layoutInfo, &setLayout);
 
 	if (vkCreatePipelineLayout(_deviceHandle, &layoutInfo, nullptr, &_layout) != VK_SUCCESS)

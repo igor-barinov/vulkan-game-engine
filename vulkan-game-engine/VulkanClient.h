@@ -8,11 +8,7 @@
 #include <future>
 
 #include "Window.h"
-#include "VulkanDevice.h"
-#include "SwapChain.h"
-#include "GraphicsPipeline.h"
-#include "CommandPool.h"
-#include "Buffer.h"
+#include "VulkanRenderer.h"
 #include "Mesh.h"
 #include "Texture.h"
 
@@ -65,17 +61,15 @@ public:
 
 private:
 
+	static constexpr size_t _NUM_FRAMES_IN_FLIGHT = 2;
+
 	/*
 	* PRIVATE MEMBERS
 	*/
 
 	/* Device used for processing
 	*/
-	VulkanDevice _device;
-	
-	/* Swap chain used for drawing
-	*/
-	std::vector<SwapChain> _swapChains;
+	Device _device;
 
 	/* List of windows to draw
 	*/
@@ -85,25 +79,9 @@ private:
 	*/
 	std::vector < std::pair < std::string, Shader::Type> > _shaderFiles;
 
-	/* Graphics pipelines
+	/* List of renderers, one per window
 	*/
-	std::vector<GraphicsPipeline> _pipelines;
-
-	/* Command pools used for drawing
-	*/
-	std::vector<CommandPool> _commandPools;
-
-	/* List of staging buffers
-	*/
-	std::vector<Buffer> _stagingBuffers;
-
-	/* List of vertex buffers
-	*/
-	std::vector<Buffer> _vertexBuffers;
-
-	/* List of index buffers
-	*/
-	std::vector<Buffer> _indexBuffers;
+	std::vector<VulkanRenderer> _renderers;
 
 	/* List of futures for window renders
 	*/
@@ -116,8 +94,7 @@ private:
 	/* List of meshes
 	*/
 	std::vector<Mesh> _meshes;
-
-	Texture _tex;
+		Texture _tex;
 
 
 
@@ -157,35 +134,10 @@ private:
 	*/
 	void _create_logical_device(const std::vector<const char*>& deviceExtensions);
 
-	/* @brief Creates the swap chain
-	*/
-	void _create_swap_chains();
+	std::vector<Shader> _load_shaders();
 
-	/* @brief Creates the graphics pipeline
+	/* @brief Creates the renderers that will draw to windows
 	*/
-	void _create_graphics_pipelines();
-
-	/* @brief Creates the command pool
-	*/
-	void _create_command_pools();
-
-	/* @brief Creates staging, vertex, and index buffers
-	*/
-	void _create_buffers();
-
-	/* @brief Renders a frame for the given window
-	*/
-	void _render_frames(
-		Window& window,
-		SwapChain& swapChain,
-		GraphicsPipeline& pipeline,
-		CommandPool& cmdPool,
-		Buffer& vertexBuffer,
-		Buffer& indexBuffer
-	);
-
-	/* @brief Destroys and recreates swap chain
-	*/
-	void _recreate_swap_chain(Window& window, SwapChain& swapChain, GraphicsPipeline& pipeline);
+	void _create_renderers(const std::vector<Shader>& shaders);
 };
 

@@ -32,6 +32,9 @@
     <Filter Include="IO">
       <UniqueIdentifier>{6d8bdd21-2021-488a-9a05-2e6a8867cc82}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CommandPool">
+      <UniqueIdentifier>{48ffa94c-6d9c-438f-9522-0b32720c3e6f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -43,7 +46,7 @@
     <ClCompile Include="VulkanInstance.cpp">
       <Filter>VulkanInstance</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanDevice.cpp">
+    <ClCompile Include="Device.cpp">
       <Filter>VulkanDevice</Filter>
     </ClCompile>
     <ClCompile Include="VulkanClient.cpp">
@@ -61,9 +64,6 @@
     <ClCompile Include="Buffer.cpp">
       <Filter>VulkanDevice</Filter>
     </ClCompile>
-    <ClCompile Include="CommandPool.cpp">
-      <Filter>GraphicsPipeline</Filter>
-    </ClCompile>
     <ClCompile Include="QueueFamily.cpp">
       <Filter>GraphicsPipeline</Filter>
     </ClCompile>
@@ -79,6 +79,24 @@
     <ClCompile Include="PNGImage.cpp">
       <Filter>IO</Filter>
     </ClCompile>
+    <ClCompile Include="CommandPool.cpp">
+      <Filter>CommandPool</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorPool.cpp">
+      <Filter>CommandPool</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandBufferPool.cpp">
+      <Filter>CommandPool</Filter>
+    </ClCompile>
+    <ClCompile Include="UBO.cpp">
+      <Filter>Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanRenderer.cpp">
+      <Filter>VulkanClient</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureSampler.cpp">
+      <Filter>Shading</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -87,7 +105,7 @@
     <ClInclude Include="VulkanInstance.h">
       <Filter>VulkanInstance</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanDevice.h">
+    <ClInclude Include="Device.h">
       <Filter>VulkanDevice</Filter>
     </ClInclude>
     <ClInclude Include="VulkanClient.h">
@@ -105,9 +123,6 @@
     <ClInclude Include="Buffer.h">
       <Filter>VulkanDevice</Filter>
     </ClInclude>
-    <ClInclude Include="CommandPool.h">
-      <Filter>GraphicsPipeline</Filter>
-    </ClInclude>
     <ClInclude Include="QueueFamily.h">
       <Filter>GraphicsPipeline</Filter>
     </ClInclude>
@@ -122,6 +137,24 @@
     </ClInclude>
     <ClInclude Include="PNGImage.h">
       <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandPool.h">
+      <Filter>CommandPool</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorPool.h">
+      <Filter>CommandPool</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandBufferPool.h">
+      <Filter>CommandPool</Filter>
+    </ClInclude>
+    <ClInclude Include="UBO.h">
+      <Filter>Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRenderer.h">
+      <Filter>VulkanClient</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureSampler.h">
+      <Filter>Shading</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

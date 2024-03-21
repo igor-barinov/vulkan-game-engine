@@ -23,6 +23,11 @@ void Window::_framebuffer_resize_callback(WinHandle handle, int width, int heigh
 * CTORS / ASSIGNMENT DEFINITIONS
 */
 
+Window::Window()
+	: _pWin(nullptr), _width(0), _height(0), _surface(VK_NULL_HANDLE), _frameBufferResized(false)
+{
+}
+
 Window::Window(const char* title, uint32_t width, uint32_t height)
 	: _pWin(nullptr), _width(width), _height(height), _surface(VK_NULL_HANDLE), _frameBufferResized(false)
 {

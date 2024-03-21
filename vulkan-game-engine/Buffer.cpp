@@ -1,5 +1,7 @@
 #include "Buffer.h"
 
+#include "CommandBufferPool.h"
+
 /*
 * CTORS / ASSIGNMENT DEFINITIONS
 */
@@ -15,7 +17,7 @@ Buffer::Buffer()
 {
 }
 
-Buffer::Buffer(const VulkanDevice& device, Buffer::Type bufferType, size_t bufferSize)
+Buffer::Buffer(const Device& device, Buffer::Type bufferType, size_t bufferSize)
 	: _buf(VK_NULL_HANDLE),
 	_usageFlags(0),
 	_memFlags(0),
@@ -100,36 +102,21 @@ void Buffer::copy_to_mapped_mem(const void* data)
 
 void Buffer::copy_to(Buffer& destBuf, VkCommandPool commandPool, VkQueue graphicsQueue)
 {
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = commandPool;
-	allocInfo.commandBufferCount = 1;
-
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(_deviceHandle, &allocInfo, &commandBuffer);
+	CommandBufferPool commandBuffer(_deviceHandle, 1, commandPool);
+	auto cmdBufHandle = commandBuffer[0];
 
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	commandBuffer.begin_all(beginInfo);
 
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _bufSize;
-	vkCmdCopyBuffer(commandBuffer, _buf, destBuf._buf, 1, &copyRegion);
+	vkCmdCopyBuffer(cmdBufHandle, _buf, destBuf._buf, 1, &copyRegion);
 
-	vkEndCommandBuffer(commandBuffer);
-
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(graphicsQueue);
-
-	vkFreeCommandBuffers(_deviceHandle, commandPool, 1, &commandBuffer);
+	commandBuffer.end_all();
+	commandBuffer.submit_all_to_queue(graphicsQueue);
 }
 
 
@@ -186,5 +173,5 @@ void Buffer::_configure_mem_alloc(VkMemoryAllocateInfo* pAllocInfo, VkMemoryRequ
 	memset(pAllocInfo, 0, sizeof(VkMemoryAllocateInfo));
 	pAllocInfo->sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	pAllocInfo->allocationSize = memRequirements.size;
-	pAllocInfo->memoryTypeIndex = VulkanDevice::find_memory_type(_physicalDeviceHandle, memRequirements.memoryTypeBits, memPropFlags);
+	pAllocInfo->memoryTypeIndex = Device::find_memory_type(_physicalDeviceHandle, memRequirements.memoryTypeBits, memPropFlags);
 }
