@@ -6,19 +6,21 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 VulkanRenderer::VulkanRenderer()
-	: _device({}),
-	_window(Window()),
-	_mesh({}),
-	_swapChain({}),
-	_pipeline({}),
-	_commandPool({}),
-	_commandBuffers({}),
-	_descriptorPool({}),
-	_vertexBuffer({}),
-	_indexBuffer({}),
-	_uniformBuffers({}),
-	_uniformBufMemory({}),
-	_ubo({})
+	: _device(),
+	_window(),
+	_mesh(),
+	_swapChain(),
+	_pipeline(),
+	_commandPool(),
+	_commandBuffers(),
+	_descriptorPool(),
+	_vertexBuffer(),
+	_indexBuffer(),
+	_uniformBuffers(),
+	_uniformBufMemory(),
+	_ubo(),
+	_textureSampler(),
+	_depthImage()
 {
 }
 
@@ -26,21 +28,25 @@ VulkanRenderer::VulkanRenderer(const Device& device, const Window& window, const
 	: _device(device),
 	_window(window),
 	_mesh(mesh),
-	_swapChain({}),
-	_pipeline({}),
-	_commandPool({}),
-	_commandBuffers({}),
-	_descriptorPool({}),
-	_vertexBuffer({}),
-	_indexBuffer({}),
-	_uniformBuffers({}),
-	_uniformBufMemory({}),
-	_ubo({})
+	_swapChain(),
+	_pipeline(),
+	_commandPool(),
+	_commandBuffers(),
+	_descriptorPool(),
+	_vertexBuffer(),
+	_indexBuffer(),
+	_uniformBuffers(),
+	_uniformBufMemory(),
+	_ubo(),
+	_textureSampler(),
+	_depthImage()
 {
 	_init_swap_chain();
 	_init_descriptor_pool();
 	_init_graphics_pipeline(shaders);
 	_init_command_pool();
+	_init_depth_image();
+	_init_framebuffers();
 	_init_texture_sampler();
 	_init_buffers();
 	_init_descriptor_data(texture);
@@ -59,7 +65,9 @@ VulkanRenderer::VulkanRenderer(const VulkanRenderer& other)
 	_indexBuffer(other._indexBuffer),
 	_uniformBuffers(other._uniformBuffers),
 	_uniformBufMemory(other._uniformBufMemory),
-	_ubo(other._ubo)
+	_ubo(other._ubo),
+	_textureSampler(other._textureSampler),
+	_depthImage(other._depthImage)
 {
 }
 
@@ -83,6 +91,12 @@ VulkanRenderer::~VulkanRenderer()
 
 void VulkanRenderer::render(bool isAsync)
 {
+	_mutex.lock();
+	auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
+	auto presentQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Present);
+	_mutex.unlock();
+
+
 	while (!_window.should_close())
 	{
 		auto currentFrame = _commandPool.get_current_frame_num();
@@ -118,47 +132,28 @@ void VulkanRenderer::render(bool isAsync)
 		_update_ubo(UBO(model, view, proj), _commandPool.get_current_frame_num());
 
 		// Reset fences and record render pass command
-		VkBuffer vertexBuffers[] = { _vertexBuffer.handle() };
 		_commandPool.reset_fences();
 		_record_render_pass(_swapChain.frame_buffer_at(imgIndex));
 
-		// Submit command
-		auto submitCommand = [this, currentFrame]() {
-			auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
-			auto cmdBufHandle = _commandBuffers[currentFrame];
-			_commandPool.submit_to_queue(&cmdBufHandle, graphicsQueue);
-			};
+		
 
-		if (isAsync)
-		{
-			_mutex.lock();
-			submitCommand();
-			_mutex.unlock();
-		}
-		else
-		{
-			submitCommand();
-		}
+		
+
+		// Submit command
+		auto cmdBufHandle = _commandBuffers[currentFrame];
+
+		_mutex.lock();
+		_commandPool.submit_to_queue(&cmdBufHandle, graphicsQueue);
+		_mutex.unlock();
 
 		
 
 		// Present image to swap chain
-		auto presentImg = [this](uint32_t* pImgIndex, bool& swapChainIsOutdated) {
-			auto presentQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Present);
-			auto waitSemaphore = _commandPool.render_finished_semaphore();
-			swapChainIsOutdated = _swapChain.present_image(presentQueue, &waitSemaphore, pImgIndex);
-			};
+		auto waitSemaphore = _commandPool.render_finished_semaphore();
 
-		if (isAsync)
-		{
-			_mutex.lock();
-			presentImg(&imgIndex, swapChainIsOutdated);
-			_mutex.unlock();
-		}
-		else
-		{
-			presentImg(&imgIndex, swapChainIsOutdated);
-		}
+		_mutex.lock();
+		swapChainIsOutdated = _swapChain.present_image(presentQueue, &waitSemaphore, &imgIndex);
+		_mutex.unlock();
 
 		if (swapChainIsOutdated || _window.was_resized())
 		{
@@ -200,12 +195,21 @@ void VulkanRenderer::_init_descriptor_pool()
 void VulkanRenderer::_init_graphics_pipeline(const std::vector<Shader>& shaders)
 {
 	_pipeline = GraphicsPipeline(_device, _swapChain, shaders, _descriptorPool);
-	_swapChain.init_framebuffers(_pipeline.render_pass());
 }
 
 void VulkanRenderer::_init_command_pool()
 {
 	_commandPool = CommandPool(_device, _NUM_FRAMES_IN_FLIGHT);
+}
+
+void VulkanRenderer::_init_depth_image()
+{
+	_depthImage = DepthImage(_device, _swapChain);
+}
+
+void VulkanRenderer::_init_framebuffers()
+{
+	_swapChain.init_framebuffers(_pipeline.render_pass(), _depthImage.get_image_view());
 }
 
 void VulkanRenderer::_init_texture_sampler()
@@ -277,8 +281,11 @@ void VulkanRenderer::_record_render_pass(VkFramebuffer frameBuffer)
 
 	VkCommandBufferBeginInfo cmdBeginInfo{};
 	VkRenderPassBeginInfo passBeginInfo{};
+	std::vector<VkClearValue> clearValues(2);
+	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+	clearValues[1].depthStencil = { 1.0f, 0 };
 
-	_configure_render_pass_cmd(&cmdBeginInfo, &passBeginInfo, frameBuffer);
+	_configure_render_pass_cmd(&cmdBeginInfo, &passBeginInfo, frameBuffer, clearValues);
 	_commandBuffers.begin_one(cmdBeginInfo, currentFrame);
 
 	vkCmdBeginRenderPass(cmdBufHandle, &passBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -313,7 +320,7 @@ void VulkanRenderer::_record_render_pass(VkFramebuffer frameBuffer)
 	_commandBuffers.end_one(currentFrame);
 }
 
-void VulkanRenderer::_configure_render_pass_cmd(VkCommandBufferBeginInfo* pCommandInfo, VkRenderPassBeginInfo* pPassInfo, VkFramebuffer frameBuffer)
+void VulkanRenderer::_configure_render_pass_cmd(VkCommandBufferBeginInfo* pCommandInfo, VkRenderPassBeginInfo* pPassInfo, VkFramebuffer frameBuffer, std::vector<VkClearValue>& clearValues)
 {
 	memset(pCommandInfo, 0, sizeof(VkCommandBufferBeginInfo));
 	pCommandInfo->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -325,9 +332,8 @@ void VulkanRenderer::_configure_render_pass_cmd(VkCommandBufferBeginInfo* pComma
 	pPassInfo->renderArea.offset = { 0, 0 };
 	pPassInfo->renderArea.extent = _swapChain.surface_extent();
 
-	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-	pPassInfo->clearValueCount = 1;
-	pPassInfo->pClearValues = &clearColor;
+	pPassInfo->clearValueCount = static_cast<uint32_t>(clearValues.size());
+	pPassInfo->pClearValues = clearValues.data();
 }
 
 void VulkanRenderer::_recreate_swap_chain()
@@ -340,8 +346,10 @@ void VulkanRenderer::_recreate_swap_chain()
 	vkDeviceWaitIdle(_device.handle());
 
 	_swapChain.~SwapChain();
+	_depthImage.~DepthImage();
 	_init_swap_chain();
-	_swapChain.init_framebuffers(_pipeline.render_pass());
+	_init_depth_image();
+	_init_framebuffers();
 }
 
 void VulkanRenderer::_update_ubo(const UBO& src, size_t frameNum)

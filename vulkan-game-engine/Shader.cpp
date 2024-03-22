@@ -8,7 +8,7 @@
 */
 
 Shader::Shader()
-	: _module(VK_NULL_HANDLE),
+	: VulkanObject(),
 	_shaderType(Type::NONE),
 	_shaderCode({}),
     _filepath({})
@@ -16,7 +16,7 @@ Shader::Shader()
 }
 
 Shader::Shader(const std::string& filepath, Type shaderType, const Device& device)
-    : _module(VK_NULL_HANDLE),
+    : VulkanObject(device.handle()),
     _shaderType(Type::NONE),
     _shaderCode({}),
     _filepath(filepath)
@@ -26,14 +26,14 @@ Shader::Shader(const std::string& filepath, Type shaderType, const Device& devic
     VkShaderModuleCreateInfo createInfo{};
     _configure_module(&createInfo);
 
-    if (vkCreateShaderModule(device.handle(), &createInfo, nullptr, &_module) != VK_SUCCESS)
+    if (vkCreateShaderModule(_deviceHandle, &createInfo, nullptr, &_handle) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create shader module");
     }
 }
 
 Shader::Shader(const Shader& other)
-    : _module(other._module),
+    : VulkanObject(other),
     _shaderType(other._shaderType),
     _filepath(other._filepath),
     _shaderCode(other._shaderCode)
@@ -53,6 +53,10 @@ Shader& Shader::operator=(Shader other)
 
 Shader::~Shader()
 {
+    if (_deviceHandle != VK_NULL_HANDLE && _handle != VK_NULL_HANDLE)
+    {
+        vkDestroyShaderModule(_deviceHandle, _handle, nullptr);
+    }
 }
 
 

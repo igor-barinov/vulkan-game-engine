@@ -1,27 +1,24 @@
 #include "TextureSampler.h"
 
 TextureSampler::TextureSampler()
-	: _sampler(VK_NULL_HANDLE),
-	_deviceHandle(VK_NULL_HANDLE)
+	: VulkanObject()
 {
 }
 
 TextureSampler::TextureSampler(const Device& device)
-	: _sampler(VK_NULL_HANDLE),
-	_deviceHandle(device.handle())
+	: VulkanObject(device.handle())
 {
 	VkSamplerCreateInfo samplerInfo{};
 	_configure_sampler(&samplerInfo, device.physical_properties());
 
-	if (vkCreateSampler(_deviceHandle, &samplerInfo, nullptr, &_sampler) != VK_SUCCESS)
+	if (vkCreateSampler(_deviceHandle, &samplerInfo, nullptr, &_handle) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create texture sampler");
 	}
 }
 
 TextureSampler::TextureSampler(const TextureSampler& other)
-	: _sampler(other._sampler),
-	_deviceHandle(other._deviceHandle)
+	: VulkanObject(other)
 {
 }
 
@@ -39,9 +36,9 @@ TextureSampler& TextureSampler::operator=(TextureSampler other)
 
 TextureSampler::~TextureSampler()
 {
-	if (_sampler != VK_NULL_HANDLE)
+	if (_handle != VK_NULL_HANDLE)
 	{
-		vkDestroySampler(_deviceHandle, _sampler, nullptr);
+		vkDestroySampler(_deviceHandle, _handle, nullptr);
 	}
 }
 

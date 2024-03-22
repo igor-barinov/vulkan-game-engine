@@ -16,6 +16,7 @@
 #include "Mesh.h"
 #include "Texture.h"
 #include "TextureSampler.h"
+#include "DepthImage.h"
 
 class VulkanRenderer
 {
@@ -40,6 +41,7 @@ public:
 		swap(rendA._uniformBufMemory, rendB._uniformBufMemory);
 		swap(rendA._ubo, rendB._ubo);
 		swap(rendA._textureSampler, rendB._textureSampler);
+		swap(rendA._depthImage, rendB._depthImage);
 	}
 
 	VulkanRenderer();
@@ -69,18 +71,21 @@ private:
 	std::array<void*, _NUM_FRAMES_IN_FLIGHT> _uniformBufMemory;
 	UBO _ubo;
 	TextureSampler _textureSampler;
+	DepthImage _depthImage;
 	std::mutex _mutex;
 
 	void _init_swap_chain();
 	void _init_descriptor_pool();
 	void _init_graphics_pipeline(const std::vector<Shader>& shaders);
 	void _init_command_pool();
+	void _init_depth_image();
+	void _init_framebuffers();
 	void _init_texture_sampler();
 	void _init_buffers();
 	void _init_descriptor_data(const Texture& texture);
 	void _init_command_buffers();
 
-	void _configure_render_pass_cmd(VkCommandBufferBeginInfo* pCommandInfo, VkRenderPassBeginInfo* pPassInfo, VkFramebuffer frameBuffer);
+	void _configure_render_pass_cmd(VkCommandBufferBeginInfo* pCommandInfo, VkRenderPassBeginInfo* pPassInfo, VkFramebuffer frameBuffer, std::vector<VkClearValue>& clearValues);
 	void _record_render_pass(VkFramebuffer frameBuffer);
 	void _recreate_swap_chain();
 	void _update_ubo(const UBO& src, size_t frameNum);

@@ -45,26 +45,24 @@ SwapChain::_SwapChainSupport SwapChain::_get_capabilites_for(VkPhysicalDevice ph
 */
 
 SwapChain::SwapChain()
-    : _swapChain(VK_NULL_HANDLE),
+    : VulkanObject(),
     _supportInfo(_SwapChainSupport{}),
     _imageFormat(VkFormat{}),
     _extent(VkExtent2D{}),
     _chainImages({}),
     _chainImageViews({}),
-    _chainFrameBuffers({}),
-    _deviceHandle(VK_NULL_HANDLE)
+    _frameBuffers({})
 {
 }
 
 SwapChain::SwapChain(const Device& device, const Window& window, FormatFilter formatFilterFn, PresentModeFilter presentModeFilterFn)
-	: _swapChain(VK_NULL_HANDLE),
+	: VulkanObject(device.handle()),
     _supportInfo(_SwapChainSupport{}),
 	_imageFormat(VkFormat{}),
 	_extent(VkExtent2D{}),
     _chainImages({}),
     _chainImageViews({}),
-    _chainFrameBuffers({}),
-    _deviceHandle(device.handle())
+    _frameBuffers({})
 {
     _supportInfo = _get_capabilites_for(device.get_physical_device(), window.surface_handle());
 
@@ -97,14 +95,14 @@ SwapChain::SwapChain(const Device& device, const Window& window, FormatFilter fo
         presentModeFilterFn
     );
 
-    if (vkCreateSwapchainKHR(_deviceHandle, &createInfo, nullptr, &_swapChain) != VK_SUCCESS) 
+    if (vkCreateSwapchainKHR(_deviceHandle, &createInfo, nullptr, &_handle) != VK_SUCCESS) 
     {
         throw std::runtime_error("Failed to create swap chain");
     }
     
-    vkGetSwapchainImagesKHR(_deviceHandle, _swapChain, &imageCount, nullptr);
+    vkGetSwapchainImagesKHR(_deviceHandle, _handle, &imageCount, nullptr);
     _chainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(_deviceHandle, _swapChain, &imageCount, _chainImages.data());
+    vkGetSwapchainImagesKHR(_deviceHandle, _handle, &imageCount, _chainImages.data());
 
     _chainImageViews.resize(imageCount);
     
@@ -122,13 +120,12 @@ SwapChain::SwapChain(const Device& device, const Window& window, FormatFilter fo
 }
 
 SwapChain::SwapChain(const SwapChain& other)
-    : _swapChain(other._swapChain),
+    : VulkanObject(other),
     _supportInfo(other._supportInfo),
     _imageFormat(other._imageFormat),
     _extent(other._extent),
     _chainImages(other._chainImages),
-    _chainImageViews(other._chainImageViews),
-    _deviceHandle(other._deviceHandle)
+    _chainImageViews(other._chainImageViews)
 {
 }
 
@@ -146,9 +143,9 @@ SwapChain& SwapChain::operator=(SwapChain other)
 
 SwapChain::~SwapChain()
 {
-    if (_swapChain != VK_NULL_HANDLE)
+    if (_handle != VK_NULL_HANDLE)
     {
-        for (auto frameBuffer : _chainFrameBuffers)
+        for (auto frameBuffer : _frameBuffers)
         {
             vkDestroyFramebuffer(_deviceHandle, frameBuffer, nullptr);
         }
@@ -158,7 +155,7 @@ SwapChain::~SwapChain()
             vkDestroyImageView(_deviceHandle, imageView, nullptr);
         }
 
-        vkDestroySwapchainKHR(_deviceHandle, _swapChain, nullptr);
+        vkDestroySwapchainKHR(_deviceHandle, _handle, nullptr);
     }
 }
 
@@ -169,14 +166,19 @@ SwapChain::~SwapChain()
 /*
 * PUBLIC METHOD DEFINITIONS
 */
-void SwapChain::init_framebuffers(VkRenderPass renderPass)
+void SwapChain::init_framebuffers(VkRenderPass renderPass, VkImageView depthImageView)
 {
-    _chainFrameBuffers.resize(_chainImageViews.size());
-    for (size_t i = 0; i < _chainFrameBuffers.size(); ++i)
+    _frameBuffers.resize(_chainImageViews.size());
+    for (size_t i = 0; i < _frameBuffers.size(); ++i)
     {
         VkFramebufferCreateInfo bufferCreateInfo{};
-        _configure_frame_buffer(&bufferCreateInfo, renderPass, &_chainImageViews[i]);
-        if (vkCreateFramebuffer(_deviceHandle, &bufferCreateInfo, nullptr, &_chainFrameBuffers[i]) != VK_SUCCESS)
+        std::vector<VkImageView> attachments = {
+            _chainImageViews[i],
+            depthImageView
+        };
+
+        _configure_frame_buffer(&bufferCreateInfo, renderPass, attachments);
+        if (vkCreateFramebuffer(_deviceHandle, &bufferCreateInfo, nullptr, &_frameBuffers[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to create framebuffer");
         }
@@ -186,7 +188,7 @@ void SwapChain::init_framebuffers(VkRenderPass renderPass)
 uint32_t SwapChain::get_next_image(VkSemaphore semaphore, bool& isOutofDate)
 {
     uint32_t imageIndex;
-    VkResult result = vkAcquireNextImageKHR(_deviceHandle, _swapChain, UINT64_MAX, semaphore, VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(_deviceHandle, _handle, UINT64_MAX, semaphore, VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) 
     {
@@ -334,13 +336,13 @@ void SwapChain::_configure_image_view(VkImageViewCreateInfo* pCreateInfo, VkImag
     pCreateInfo->subresourceRange.layerCount = 1;
 }
 
-void SwapChain::_configure_frame_buffer(VkFramebufferCreateInfo* pCreateInfo, VkRenderPass renderPass, VkImageView* pAttachments) const
+void SwapChain::_configure_frame_buffer(VkFramebufferCreateInfo* pCreateInfo, VkRenderPass renderPass, std::vector<VkImageView>& attachments) const
 {
     memset(pCreateInfo, 0, sizeof(VkFramebufferCreateInfo));
     pCreateInfo->sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     pCreateInfo->renderPass = renderPass;
-    pCreateInfo->attachmentCount = 1;
-    pCreateInfo->pAttachments = pAttachments;
+    pCreateInfo->attachmentCount = static_cast<uint32_t>(attachments.size());
+    pCreateInfo->pAttachments = attachments.data();
     pCreateInfo->width = _extent.width;
     pCreateInfo->height = _extent.height;
     pCreateInfo->layers = 1;
@@ -354,7 +356,7 @@ void SwapChain::_configure_present_info(VkPresentInfoKHR* pInfo, VkSemaphore* pW
     pInfo->waitSemaphoreCount = 1;
     pInfo->pWaitSemaphores = pWaitSemaphore;
     pInfo->swapchainCount = 1;
-    pInfo->pSwapchains = &_swapChain;
+    pInfo->pSwapchains = &_handle;
 
     pInfo->pImageIndices = pImageIndices;
 }

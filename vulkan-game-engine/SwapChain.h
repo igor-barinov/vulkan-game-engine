@@ -4,13 +4,14 @@
 #include <vector>
 #include <algorithm>
 
+#include "VulkanObject.h"
 #include "Device.h"
 #include "Window.h"
 
 /*
 * Class that implements a Vulkan swap chain
 */
-class SwapChain
+class SwapChain : public VulkanObject<VkSwapchainKHR>
 {
 public:
 
@@ -18,7 +19,6 @@ public:
 	* TYPEDEFS
 	*/
 
-	using Handle = VkSwapchainKHR;
 	using FormatFilter = bool(*)(VkSurfaceFormatKHR);
 	using PresentModeFilter = bool(*)(VkPresentModeKHR);
 
@@ -34,13 +34,13 @@ public:
 	{
 		using std::swap;
 
-		swap(chainA._swapChain, chainB._swapChain);
+		swap(chainA._handle, chainB._handle);
 		swap(chainA._supportInfo, chainB._supportInfo);
 		swap(chainA._imageFormat, chainB._imageFormat);
 		swap(chainA._extent, chainB._extent);
 		swap(chainA._chainImages, chainB._chainImages);
 		swap(chainA._chainImageViews, chainB._chainImageViews);
-		swap(chainA._chainFrameBuffers, chainB._chainFrameBuffers);
+		swap(chainA._frameBuffers, chainB._frameBuffers);
 		swap(chainA._deviceHandle, chainB._deviceHandle);
 	}
 
@@ -74,7 +74,7 @@ public:
 	* 
 	* @param renderPass Handle to render pass that framebuffers will be used with
 	*/
-	void init_framebuffers(VkRenderPass renderPass);
+	void init_framebuffers(VkRenderPass renderPass, VkImageView depthImageView);
 
 	/* @brief Gets the next image from the swap chain
 	* 
@@ -108,7 +108,11 @@ public:
 
 	/* @brief Returns the frame buffer at the given index
 	*/
-	inline VkFramebuffer frame_buffer_at(size_t index) const { return _chainFrameBuffers[index]; }
+	inline VkFramebuffer frame_buffer_at(size_t index) const { return _frameBuffers[index]; }
+
+	/* @brief Returns a list of depth formats that can be used
+	*/
+	inline static std::vector<VkFormat> available_depth_formats() { return { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }; }
 
 
 
@@ -144,10 +148,6 @@ private:
 	* PRIVATE MEMBERS
 	*/
 
-	/* Handle to swap chain
-	*/
-	Handle _swapChain;
-
 	/* Swap chain capability info
 	*/
 	_SwapChainSupport _supportInfo;
@@ -170,11 +170,7 @@ private:
 
 	/* Chain frame buffer list
 	*/
-	std::vector<VkFramebuffer> _chainFrameBuffers;
-
-	/* Handle to device using swap chain
-	*/
-	VkDevice _deviceHandle;
+	std::vector<VkFramebuffer> _frameBuffers;
 
 
 
@@ -214,7 +210,7 @@ private:
 
 	/* @brief Fills struct with necessary info for creating frame buffer
 	*/
-	void _configure_frame_buffer(VkFramebufferCreateInfo* pCreateInfo, VkRenderPass renderPass, VkImageView* pAttachments) const;
+	void _configure_frame_buffer(VkFramebufferCreateInfo* pCreateInfo, VkRenderPass renderPass, std::vector<VkImageView>& attachments) const;
 
 	/* @brief Fills struct with necessary info for presentation
 	*/

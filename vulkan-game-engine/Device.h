@@ -43,6 +43,8 @@ public:
 
 	static uint32_t find_memory_type(VkPhysicalDevice physicalDevice, uint32_t typeMask, VkMemoryPropertyFlags memPropFlags);
 
+	static VkFormat select_supported_depth_format(VkPhysicalDevice physicalDevice, const std::vector<VkFormat>& availableFormats, VkImageTiling tilingType, VkFormatFeatureFlags featureFlags);
+
 
 
 	/*

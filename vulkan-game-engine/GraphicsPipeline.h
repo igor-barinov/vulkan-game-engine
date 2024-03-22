@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "VulkanObject.h"
 #include "Shader.h"
 #include "SwapChain.h"
 #include "DescriptorPool.h"
@@ -12,15 +13,9 @@
 /*
 * Class implementing Vulkan graphics pipeline
 */
-class GraphicsPipeline
+class GraphicsPipeline : public VulkanObject<VkPipeline>
 {
 public:
-
-	/*
-	* TYPEDEFS
-	*/
-
-	using Handle = VkPipeline;
 
 
 
@@ -35,7 +30,7 @@ public:
 		using std::swap;
 
 		swap(pipelineA._layout, pipelineB._layout);
-		swap(pipelineA._pipeline, pipelineB._pipeline);
+		swap(pipelineA._handle, pipelineB._handle);
 		swap(pipelineA._renderPass, pipelineB._renderPass);
 		swap(pipelineA._deviceHandle, pipelineB._deviceHandle);
 	}
@@ -63,10 +58,6 @@ public:
 	/*
 	* PUBLIC CONST METHODS
 	*/
-
-	/* @brief Returns the handle to the pipeline
-	*/
-	inline Handle handle() const { return _pipeline; }
 
 	/* @brief Returns handle to pipeline layout object
 	*/
@@ -99,17 +90,9 @@ private:
 	*/
 	VkPipelineLayout _layout;
 
-	/* Handle to pipeline
-	*/
-	VkPipeline _pipeline;
-
 	/* Handle to render pass object
 	*/
 	VkRenderPass _renderPass;
-
-	/* Handle to device being used
-	*/
-	VkDevice _deviceHandle;
 
 
 
@@ -149,6 +132,10 @@ private:
 	*/
 	void _configure_pipeline_multisampling(VkPipelineMultisampleStateCreateInfo* pCreateInfo) const;
 
+	/* @brief Fills struct with info necessary for creating the depth stencil state
+	*/
+	void _configure_pipeline_depth_stencil(VkPipelineDepthStencilStateCreateInfo* pCreateInfo) const;
+
 	/* @brief Fills struct with info necessary for creating the colorblend state
 	*/
 	void _configure_pipeline_colorblend(VkPipelineColorBlendStateCreateInfo* pStateInfo, VkPipelineColorBlendAttachmentState* pAttachInfo) const;
@@ -165,9 +152,13 @@ private:
 	*/
 	void _configure_color_attachment(VkAttachmentDescription* pCreateInfo, VkAttachmentReference* pRefInfo, VkFormat format, uint32_t index) const;
 
+	/* @brief Fills struct with info necessary for creating a depth attachment
+	*/
+	void _configure_depth_attachment(VkAttachmentDescription* pCreateInfo, VkAttachmentReference* pRefInfo, VkFormat depthFormat, uint32_t index) const;
+
 	/* @brief Fills struct with info necessary for creating a subpass
 	*/
-	void _configure_subpass(VkSubpassDescription* pCreateInfo, const std::vector<VkAttachmentReference>& attachmentRefs) const;
+	void _configure_subpass(VkSubpassDescription* pCreateInfo, const std::vector<VkAttachmentReference>& colorAttachments, VkAttachmentReference* pDepthAttachment) const;
 
 	/* @brief Fills struct with info necessary for creating a subpass dependency
 	*/
@@ -177,7 +168,7 @@ private:
 	*/
 	void _configure_render_pass(
 		VkRenderPassCreateInfo* pCreateInfo,
-		const std::vector<VkAttachmentDescription>& colorAttachments,
+		const std::vector<VkAttachmentDescription>& attachments,
 		const std::vector<VkSubpassDescription>& subpasses,
 		const std::vector<VkSubpassDependency>& subpassDeps
 	) const;
@@ -192,6 +183,7 @@ private:
 		VkPipelineViewportStateCreateInfo* pPipelineViewport,
 		VkPipelineRasterizationStateCreateInfo* pRasterization,
 		VkPipelineMultisampleStateCreateInfo* pMultisampling,
+		VkPipelineDepthStencilStateCreateInfo* pDepthStencil,
 		VkPipelineColorBlendStateCreateInfo* pColorblend,
 		VkPipelineDynamicStateCreateInfo* pDynamicState
 	) const;

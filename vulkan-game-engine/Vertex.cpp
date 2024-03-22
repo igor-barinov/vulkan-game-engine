@@ -20,7 +20,7 @@ std::array<VkVertexInputAttributeDescription, 3> Vertex::getAttributeDescription
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[0].offset = offsetof(Vertex, _pos);
 
     attributeDescriptions[1].binding = 0;
@@ -44,8 +44,8 @@ std::array<VkVertexInputAttributeDescription, 3> Vertex::getAttributeDescription
 * CTOR / ASSIGNMENT DEFINITIONS
 */
 
-Vertex::Vertex(float x, float y, float r, float g, float b, float textureX, float textureY)
-    : _pos({x, y}),
+Vertex::Vertex(float x, float y, float z, float r, float g, float b, float textureX, float textureY)
+    : _pos({x, y, z}),
     _color({r, g, b}),
     _texCoord({textureX, textureY})
 {

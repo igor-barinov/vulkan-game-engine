@@ -7,23 +7,21 @@
 */
 
 Buffer::Buffer()
-	: _buf(VK_NULL_HANDLE),
+	: VulkanObject(),
 	_usageFlags(0),
 	_memFlags(0),
 	_bufMem(VK_NULL_HANDLE),
 	_bufSize(0),
-	_deviceHandle(VK_NULL_HANDLE),
 	_physicalDeviceHandle(VK_NULL_HANDLE)
 {
 }
 
 Buffer::Buffer(const Device& device, Buffer::Type bufferType, size_t bufferSize)
-	: _buf(VK_NULL_HANDLE),
+	: VulkanObject(device.handle()),
 	_usageFlags(0),
 	_memFlags(0),
 	_bufMem(VK_NULL_HANDLE),
 	_bufSize(bufferSize),
-	_deviceHandle(device.handle()),
 	_physicalDeviceHandle(device.get_physical_device())
 {
 	switch (bufferType)
@@ -50,12 +48,11 @@ Buffer::Buffer(const Device& device, Buffer::Type bufferType, size_t bufferSize)
 }
 
 Buffer::Buffer(const Buffer& other)
-	: _buf(VK_NULL_HANDLE),
+	: VulkanObject(other),
 	_usageFlags(other._usageFlags),
 	_memFlags(other._memFlags),
 	_bufMem(VK_NULL_HANDLE),
 	_bufSize(other._bufSize),
-	_deviceHandle(other._deviceHandle),
 	_physicalDeviceHandle(other._physicalDeviceHandle)
 {
 	_create_buffer(_usageFlags, _memFlags);
@@ -75,11 +72,11 @@ Buffer& Buffer::operator=(Buffer other)
 
 Buffer::~Buffer()
 {
-	if (_buf != VK_NULL_HANDLE)
+	if (_handle != VK_NULL_HANDLE)
 	{
-		vkDestroyBuffer(_deviceHandle, _buf, nullptr);
+		vkDestroyBuffer(_deviceHandle, _handle, nullptr);
 		vkFreeMemory(_deviceHandle, _bufMem, nullptr);
-		_buf = VK_NULL_HANDLE;
+		_handle = VK_NULL_HANDLE;
 		_bufMem = VK_NULL_HANDLE;
 	}
 }
@@ -113,7 +110,7 @@ void Buffer::copy_to(Buffer& destBuf, VkCommandPool commandPool, VkQueue graphic
 
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _bufSize;
-	vkCmdCopyBuffer(cmdBufHandle, _buf, destBuf._buf, 1, &copyRegion);
+	vkCmdCopyBuffer(cmdBufHandle, _handle, destBuf._handle, 1, &copyRegion);
 
 	commandBuffer.end_all();
 	commandBuffer.submit_all_to_queue(graphicsQueue);
@@ -132,13 +129,13 @@ void Buffer::_create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags memP
 	VkBufferCreateInfo bufferInfo{};
 	_configure_buffer(&bufferInfo, usage);
 
-	if (vkCreateBuffer(_deviceHandle, &bufferInfo, nullptr, &_buf) != VK_SUCCESS)
+	if (vkCreateBuffer(_deviceHandle, &bufferInfo, nullptr, &_handle) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create buffer");
 	}
 
 	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(_deviceHandle, _buf, &memRequirements);
+	vkGetBufferMemoryRequirements(_deviceHandle, _handle, &memRequirements);
 
 	VkMemoryAllocateInfo memAllocInfo{};
 	_configure_mem_alloc(&memAllocInfo, memRequirements, memPropFlags);
@@ -148,7 +145,7 @@ void Buffer::_create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags memP
 		throw std::runtime_error("Failed to allocate buffer memory");
 	}
 
-	vkBindBufferMemory(_deviceHandle, _buf, _bufMem, 0);
+	vkBindBufferMemory(_deviceHandle, _handle, _bufMem, 0);
 }
 
 

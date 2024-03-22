@@ -4,12 +4,13 @@
 
 #include <algorithm>
 
+#include "VulkanObject.h"
 #include "Device.h"
 
 /*
 * Class implementing a Vulkan buffer
 */
-class Buffer
+class Buffer : public VulkanObject<VkBuffer>
 {
 public:
 
@@ -26,8 +27,6 @@ public:
 		NONE
 	};
 
-	using Handle = VkBuffer;
-
 
 
 	/*
@@ -40,7 +39,7 @@ public:
 	{
 		using std::swap;
 
-		swap(bufA._buf, bufB._buf);
+		swap(bufA._handle, bufB._handle);
 		swap(bufA._usageFlags, bufB._usageFlags);
 		swap(bufA._memFlags, bufB._memFlags);
 		swap(bufA._bufMem, bufB._bufMem);
@@ -90,25 +89,11 @@ public:
 	*/
 	void copy_to(Buffer& destBuf, VkCommandPool commandPool, VkQueue graphicsQueue);
 
-
-
-	/*
-	* PUBLIC CONST METHODS
-	*/
-
-	/* @brief Returns a handle to the buffer object
-	*/
-	inline Handle handle() const { return _buf; }
-
 private:
 
 	/*
 	* PRIVATE MEMBERS
 	*/
-
-	/* Handle to buffer object
-	*/
-	Handle _buf;
 
 	/* Buffer usage flags
 	*/
@@ -125,10 +110,6 @@ private:
 	/* Buffer size
 	*/
 	VkDeviceSize _bufSize;
-
-	/* Handle to logical device
-	*/
-	VkDevice _deviceHandle;
 
 	/* Handle to physical device
 	*/

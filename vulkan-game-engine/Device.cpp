@@ -22,6 +22,26 @@ uint32_t Device::find_memory_type(VkPhysicalDevice physicalDevice, uint32_t type
     throw std::runtime_error("Failed to find memory type for buffer");
 }
 
+VkFormat Device::select_supported_depth_format(VkPhysicalDevice physicalDevice, const std::vector<VkFormat>& availableFormats, VkImageTiling tilingType, VkFormatFeatureFlags featureFlags)
+{
+    for (VkFormat format : availableFormats)
+    {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+
+        if (tilingType == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & featureFlags) == featureFlags)
+        {
+            return format;
+        }
+        else if (tilingType == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & featureFlags) == featureFlags)
+        {
+            return format;
+        }
+    }
+
+    throw std::runtime_error("Failed to find a depth format");
+}
+
 
 
 

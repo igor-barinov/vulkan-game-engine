@@ -4,20 +4,19 @@
 #include <vector>
 #include <sstream>
 
+#include "VulkanObject.h"
 #include "Device.h"
 
 /*
 * Class that implements a Vulkan shader
 */
-class Shader
+class Shader : public VulkanObject<VkShaderModule>
 {
 public:
 
 	/*
 	* TYPEDEFS / ENUMS
 	*/
-
-	using Handle = VkShaderModule;
 
 	enum Type
 	{
@@ -39,7 +38,7 @@ public:
 	{
 		using std::swap;
 
-		swap(shaderA._module, shaderB._module);
+		swap(shaderA._handle, shaderB._handle);
 		swap(shaderA._shaderType, shaderB._shaderType);
 		swap(shaderA._shaderCode, shaderB._shaderCode);
 		swap(shaderA._filepath, shaderB._filepath);
@@ -81,10 +80,6 @@ public:
 	* PUBLIC CONST METHODS
 	*/
 
-	/* @brief Returns the handle to the shader module
-	*/
-	inline Handle handle() const { return _module; }
-
 	/* @brief Returns the type of shader that is loaded
 	*/
 	inline Type shader_type() const { return _shaderType; }
@@ -94,10 +89,6 @@ private:
 	/*
 	* PRIVATE MEMBERS
 	*/
-
-	/* Handle to shader module
-	*/
-	Handle _module;
 
 	/* The type of shader currently loaded
 	*/

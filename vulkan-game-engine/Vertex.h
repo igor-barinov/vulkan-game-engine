@@ -23,7 +23,7 @@ public:
 	* @param g Green color value
 	* @param b Blue color value
 	*/
-	Vertex(float x, float y, float r, float g, float b, float textureX, float textureY);
+	Vertex(float x, float y, float z, float r, float g, float b, float textureX, float textureY);
 
 
 
@@ -47,7 +47,7 @@ private:
 
 	/* Position vector
 	*/
-	glm::vec2 _pos;
+	glm::vec3 _pos;
 
 	/* Color vector
 	*/

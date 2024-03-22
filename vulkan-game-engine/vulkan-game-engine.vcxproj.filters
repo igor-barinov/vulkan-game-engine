@@ -35,6 +35,9 @@
     <Filter Include="CommandPool">
       <UniqueIdentifier>{48ffa94c-6d9c-438f-9522-0b32720c3e6f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Base Classes">
+      <UniqueIdentifier>{87feb0ab-3436-4524-98f0-f8482556d630}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -97,6 +100,12 @@
     <ClCompile Include="TextureSampler.cpp">
       <Filter>Shading</Filter>
     </ClCompile>
+    <ClCompile Include="DepthImage.cpp">
+      <Filter>Shading</Filter>
+    </ClCompile>
+    <ClCompile Include="Image.cpp">
+      <Filter>Base Classes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -141,9 +150,6 @@
     <ClInclude Include="CommandPool.h">
       <Filter>CommandPool</Filter>
     </ClInclude>
-    <ClInclude Include="DescriptorPool.h">
-      <Filter>CommandPool</Filter>
-    </ClInclude>
     <ClInclude Include="CommandBufferPool.h">
       <Filter>CommandPool</Filter>
     </ClInclude>
@@ -155,6 +161,18 @@
     </ClInclude>
     <ClInclude Include="TextureSampler.h">
       <Filter>Shading</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanObject.h">
+      <Filter>Base Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="DepthImage.h">
+      <Filter>Shading</Filter>
+    </ClInclude>
+    <ClInclude Include="Image.h">
+      <Filter>Base Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorPool.h">
+      <Filter>CommandPool</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

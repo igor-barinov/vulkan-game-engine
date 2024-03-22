@@ -3,19 +3,18 @@
 #include <vulkan/vulkan.h>
 #include <algorithm>
 
+#include "VulkanObject.h"
 #include "Device.h"
 
-class TextureSampler
+class TextureSampler : public VulkanObject<VkSampler>
 {
 public:
-
-	using Handle = VkSampler;
 
 	friend void swap(TextureSampler& samplerA, TextureSampler& samplerB)
 	{
 		using std::swap;
 
-		swap(samplerA._sampler, samplerB._sampler);
+		swap(samplerA._handle, samplerB._handle);
 		swap(samplerA._deviceHandle, samplerB._deviceHandle);
 	}
 
@@ -26,12 +25,7 @@ public:
 	TextureSampler& operator=(TextureSampler other);
 	~TextureSampler();
 
-	inline Handle handle() const { return _sampler; }
-
-private:
-	VkSampler _sampler;
-	VkDevice _deviceHandle;
-	
+private:	
 	void _configure_sampler(VkSamplerCreateInfo* pCreateInfo, VkPhysicalDeviceProperties deviceProps);
 };
 

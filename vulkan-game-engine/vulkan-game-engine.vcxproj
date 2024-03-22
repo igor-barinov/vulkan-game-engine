@@ -146,8 +146,10 @@
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="CommandBufferPool.cpp" />
     <ClCompile Include="CommandPool.cpp" />
+    <ClCompile Include="DepthImage.cpp" />
     <ClCompile Include="DescriptorPool.cpp" />
     <ClCompile Include="GraphicsPipeline.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="PNGImage.cpp" />
@@ -168,8 +170,10 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="CommandBufferPool.h" />
     <ClInclude Include="CommandPool.h" />
+    <ClInclude Include="DepthImage.h" />
     <ClInclude Include="DescriptorPool.h" />
     <ClInclude Include="GraphicsPipeline.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PNGImage.h" />
     <ClInclude Include="QueueFamily.h" />
@@ -182,6 +186,7 @@
     <ClInclude Include="VulkanClient.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="VulkanInstance.h" />
+    <ClInclude Include="VulkanObject.h" />
     <ClInclude Include="VulkanRenderer.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>

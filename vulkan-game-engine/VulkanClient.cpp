@@ -21,12 +21,18 @@ VulkanClient::VulkanClient()
 {
 	_meshes = {
 		Mesh({
-			Vertex(-0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0),
-			Vertex(0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0),
-			Vertex(0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0),
-			Vertex(-0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0)
+			Vertex(-0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0),
+			Vertex(0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0),
+			Vertex(0.5, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0),
+			Vertex(-0.5, 0.5, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+
+			Vertex(-0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0),
+			Vertex(0.5, -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0),
+			Vertex(0.5, 0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0),
+			Vertex(-0.5, 0.5, -0.5, 1.0, 1.0, 1.0, 1.0, 1.0)
 		},
-		{0, 1, 2, 2, 3, 0})
+		{0, 1, 2, 2, 3, 0,
+		 4, 5, 6, 6, 7, 4})
 	};
 }
 
@@ -74,7 +80,7 @@ void VulkanClient::run()
 	for (size_t i = 0; i < _windows.size(); ++i)
 	{
 		auto task = [this](VulkanRenderer& renderer) {
-			renderer.render();
+			renderer.render(true);
 			};
 
 		_windowFutures.push_back(std::async(

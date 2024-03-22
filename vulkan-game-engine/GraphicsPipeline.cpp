@@ -7,35 +7,35 @@
 */
 
 GraphicsPipeline::GraphicsPipeline()
-	: _layout(VK_NULL_HANDLE),
-	_pipeline(VK_NULL_HANDLE),
-	_renderPass(VK_NULL_HANDLE),
-	_deviceHandle(VK_NULL_HANDLE)
+	: VulkanObject(),
+	_layout(VK_NULL_HANDLE),
+	_renderPass(VK_NULL_HANDLE)
 {
 }
 
 GraphicsPipeline::GraphicsPipeline(const Device& device, const SwapChain& swapChain, const std::vector<Shader>& shaders, const DescriptorPool& descriptors)
-	: _layout(VK_NULL_HANDLE),
-	_pipeline(VK_NULL_HANDLE),
-	_renderPass(VK_NULL_HANDLE),
-	_deviceHandle(device.handle())
+	: VulkanObject(device.handle()),
+	_layout(VK_NULL_HANDLE),
+	_renderPass(VK_NULL_HANDLE)
 {
 	// Create render pass
-	std::vector<VkAttachmentDescription> colorAttachments(1);
-	std::vector<VkAttachmentReference> attachmentRefs(1);
-	for (size_t i = 0; i < colorAttachments.size(); ++i)
-	{
-		_configure_color_attachment(&colorAttachments[i], &attachmentRefs[i], swapChain.surface_image_format(), i);
-	}
+	std::vector<VkAttachmentDescription> attachments(2);
+	std::vector<VkAttachmentReference> colorAttachmentRefs(1);
+	VkAttachmentReference depthAttachmentRef;
+
+	_configure_color_attachment(&attachments[0], &colorAttachmentRefs[0], swapChain.surface_image_format(), 0);
+
+	auto depthFormat = Device::select_supported_depth_format(device.get_physical_device(), SwapChain::available_depth_formats(), VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	_configure_depth_attachment(&attachments[1], &depthAttachmentRef, depthFormat, 1);
 
 	std::vector<VkSubpassDescription> subpasses(1);
-	_configure_subpass(&subpasses[0], attachmentRefs);
+	_configure_subpass(&subpasses[0], colorAttachmentRefs, &depthAttachmentRef);
 
 	std::vector<VkSubpassDependency> subpassDeps(1);
 	_configure_subpass_dependency(&subpassDeps[0]);
 
 	VkRenderPassCreateInfo renderPassInfo;
-	_configure_render_pass(&renderPassInfo, colorAttachments, subpasses, subpassDeps);
+	_configure_render_pass(&renderPassInfo, attachments, subpasses, subpassDeps);
 
 	if (vkCreateRenderPass(_deviceHandle, &renderPassInfo, nullptr, &_renderPass) != VK_SUCCESS)
 	{
@@ -65,6 +65,9 @@ GraphicsPipeline::GraphicsPipeline(const Device& device, const SwapChain& swapCh
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	_configure_pipeline_multisampling(&multisampling);
 
+	VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	_configure_pipeline_depth_stencil(&depthStencil);
+
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	VkPipelineColorBlendStateCreateInfo colorBlend{};
 	_configure_pipeline_colorblend(&colorBlend, &colorBlendAttachment);
@@ -86,19 +89,29 @@ GraphicsPipeline::GraphicsPipeline(const Device& device, const SwapChain& swapCh
 	}
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
-	_configure_pipeline(&pipelineInfo, shaderStages, &vertexInputInfo, &pipelineInput, &pipelineViewport, &rasterization, &multisampling, &colorBlend, &dynamicStateInfo);
+	_configure_pipeline(
+		&pipelineInfo, 
+		shaderStages, 
+		&vertexInputInfo, 
+		&pipelineInput, 
+		&pipelineViewport, 
+		&rasterization, 
+		&multisampling, 
+		&depthStencil, 
+		&colorBlend, 
+		&dynamicStateInfo
+	);
 
-	if (vkCreateGraphicsPipelines(_deviceHandle, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_pipeline) != VK_SUCCESS)
+	if (vkCreateGraphicsPipelines(_deviceHandle, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_handle) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create graphics pipeline");
 	}
 }
 
 GraphicsPipeline::GraphicsPipeline(const GraphicsPipeline& other)
-	: _layout(other._layout),
-	_pipeline(other._pipeline),
-	_renderPass(other._renderPass),
-	_deviceHandle(other._deviceHandle)
+	: VulkanObject(other),
+	_layout(other._layout),
+	_renderPass(other._renderPass)
 {
 }
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& other) noexcept
@@ -114,9 +127,9 @@ GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline other)
 
 GraphicsPipeline::~GraphicsPipeline()
 {
-	if (_pipeline != VK_NULL_HANDLE)
+	if (_handle != VK_NULL_HANDLE)
 	{
-		vkDestroyPipeline(_deviceHandle, _pipeline, nullptr);
+		vkDestroyPipeline(_deviceHandle, _handle, nullptr);
 		vkDestroyPipelineLayout(_deviceHandle, _layout, nullptr);
 		vkDestroyRenderPass(_deviceHandle, _renderPass, nullptr);
 	}
@@ -206,6 +219,17 @@ void GraphicsPipeline::_configure_pipeline_multisampling(VkPipelineMultisampleSt
 	pCreateInfo->rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 }
 
+void GraphicsPipeline::_configure_pipeline_depth_stencil(VkPipelineDepthStencilStateCreateInfo* pCreateInfo) const
+{
+	memset(pCreateInfo, 0, sizeof(VkPipelineDepthStencilStateCreateInfo));
+	pCreateInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	pCreateInfo->depthTestEnable = VK_TRUE;
+	pCreateInfo->depthWriteEnable = VK_TRUE;
+	pCreateInfo->depthCompareOp = VK_COMPARE_OP_LESS;
+	pCreateInfo->depthBoundsTestEnable = VK_FALSE;
+	pCreateInfo->stencilTestEnable = VK_FALSE;
+}
+
 void GraphicsPipeline::_configure_pipeline_colorblend(VkPipelineColorBlendStateCreateInfo* pStateInfo, VkPipelineColorBlendAttachmentState* pAttachInfo) const
 {
 	memset(pAttachInfo, 0, sizeof(VkPipelineColorBlendAttachmentState));
@@ -258,12 +282,30 @@ void GraphicsPipeline::_configure_color_attachment(VkAttachmentDescription* pCre
 	pRefInfo->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 }
 
-void GraphicsPipeline::_configure_subpass(VkSubpassDescription* pCreateInfo, const std::vector<VkAttachmentReference>& attachmentRefs) const
+void GraphicsPipeline::_configure_depth_attachment(VkAttachmentDescription* pCreateInfo, VkAttachmentReference* pRefInfo, VkFormat depthFormat, uint32_t index) const
+{
+	memset(pCreateInfo, 0, sizeof(VkAttachmentDescription));
+	pCreateInfo->format = depthFormat;
+	pCreateInfo->samples = VK_SAMPLE_COUNT_1_BIT;
+	pCreateInfo->loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	pCreateInfo->storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	pCreateInfo->stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	pCreateInfo->stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	pCreateInfo->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	pCreateInfo->finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	memset(pRefInfo, 0, sizeof(VkAttachmentReference));
+	pRefInfo->attachment = index;
+	pRefInfo->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+}
+
+void GraphicsPipeline::_configure_subpass(VkSubpassDescription* pCreateInfo, const std::vector<VkAttachmentReference>& colorAttachments, VkAttachmentReference* pDepthAttachment) const
 {
 	memset(pCreateInfo, 0, sizeof(VkSubpassDescription));
 	pCreateInfo->pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	pCreateInfo->colorAttachmentCount = attachmentRefs.size();
-	pCreateInfo->pColorAttachments = attachmentRefs.data();
+	pCreateInfo->colorAttachmentCount = colorAttachments.size();
+	pCreateInfo->pColorAttachments = colorAttachments.data();
+	pCreateInfo->pDepthStencilAttachment = pDepthAttachment;
 }
 
 void GraphicsPipeline::_configure_subpass_dependency(VkSubpassDependency* pCreateInfo) const
@@ -273,21 +315,21 @@ void GraphicsPipeline::_configure_subpass_dependency(VkSubpassDependency* pCreat
 	pCreateInfo->dstSubpass = 0;
 	pCreateInfo->srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	pCreateInfo->srcAccessMask = 0;
-	pCreateInfo->dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	pCreateInfo->dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	pCreateInfo->dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	pCreateInfo->dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 }
 
 void GraphicsPipeline::_configure_render_pass(
 	VkRenderPassCreateInfo* pCreateInfo,
-	const std::vector<VkAttachmentDescription>& colorAttachments,
+	const std::vector<VkAttachmentDescription>& attachments,
 	const std::vector<VkSubpassDescription>& subpasses,
 	const std::vector<VkSubpassDependency>& subpassDeps
 ) const
 {
 	memset(pCreateInfo, 0, sizeof(VkRenderPassCreateInfo));
 	pCreateInfo->sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	pCreateInfo->attachmentCount = colorAttachments.size();
-	pCreateInfo->pAttachments = colorAttachments.data();
+	pCreateInfo->attachmentCount = attachments.size();
+	pCreateInfo->pAttachments = attachments.data();
 	pCreateInfo->subpassCount = subpasses.size();
 	pCreateInfo->pSubpasses = subpasses.data();
 	pCreateInfo->dependencyCount = subpassDeps.size();
@@ -302,6 +344,7 @@ void GraphicsPipeline::_configure_pipeline(
 	VkPipelineViewportStateCreateInfo* pPipelineViewport,
 	VkPipelineRasterizationStateCreateInfo* pRasterization,
 	VkPipelineMultisampleStateCreateInfo* pMultisampling,
+	VkPipelineDepthStencilStateCreateInfo* pDepthStencil,
 	VkPipelineColorBlendStateCreateInfo* pColorblend,
 	VkPipelineDynamicStateCreateInfo* pDynamicState
 ) const
@@ -315,6 +358,7 @@ void GraphicsPipeline::_configure_pipeline(
 	pCreateInfo->pViewportState = pPipelineViewport;
 	pCreateInfo->pRasterizationState = pRasterization;
 	pCreateInfo->pMultisampleState = pMultisampling;
+	pCreateInfo->pDepthStencilState = pDepthStencil;
 	pCreateInfo->pColorBlendState = pColorblend;
 	pCreateInfo->pDynamicState = pDynamicState;
 	pCreateInfo->layout = _layout;
