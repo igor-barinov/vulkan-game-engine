@@ -27,6 +27,26 @@ Texture::Texture(PNGImage& texture, Device& device, CommandPool& cmdPool)
     _record_image_layout_transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdPool, graphicsQueue);
 }
 
+Texture::Texture(const Texture& other)
+    : Image(other)
+{
+}
+
+Texture::Texture(Texture&& other) noexcept
+    : Image(std::move(other))
+{
+}
+
+Texture& Texture::operator=(Texture other)
+{
+    swap(*this, other);
+    return *this;
+}
+
+Texture::~Texture()
+{
+}
+
 void Texture::_record_image_layout_transition(VkImageLayout oldLayout, VkImageLayout newLayout, const CommandPool& commandPool, VkQueue graphicsQueue)
 {
     VkCommandBufferBeginInfo beginInfo{};

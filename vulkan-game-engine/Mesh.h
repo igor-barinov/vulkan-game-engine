@@ -21,7 +21,13 @@ public:
 	* @param vertices List of vertices
 	* @param indices List of vertex indexes
 	*/
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint16_t> indices);
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t> indices);
+
+
+	void scale(float scalar);
+	void rotate_x(float degrees);
+	void rotate_y(float degrees);
+	void rotate_z(float degrees);
 
 
 
@@ -35,7 +41,7 @@ public:
 
 	/* @brief Returns list of indices
 	*/
-	inline const std::vector<uint16_t>& indices() const { return _indices; }
+	inline const std::vector<uint32_t>& indices() const { return _indices; }
 
 	/* @brief Returns size in bytes of vertices
 	*/
@@ -51,7 +57,7 @@ public:
 
 	/* @brief Returns pointer to index data
 	*/
-	inline const uint16_t* index_data() const { return _indices.data(); }
+	inline const uint32_t* index_data() const { return _indices.data(); }
 
 private:
 
@@ -59,6 +65,6 @@ private:
 	* PRIVATE MEMBERS
 	*/
 	std::vector<Vertex> _vertices;
-	std::vector<uint16_t> _indices;
+	std::vector<uint32_t> _indices;
 };
 

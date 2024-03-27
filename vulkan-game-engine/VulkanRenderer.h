@@ -17,6 +17,7 @@
 #include "Texture.h"
 #include "TextureSampler.h"
 #include "DepthImage.h"
+#include "Model3D.h"
 
 class VulkanRenderer
 {
@@ -29,7 +30,7 @@ public:
 
 		swap(rendA._device, rendB._device);
 		swap(rendA._window, rendB._window);
-		swap(rendA._mesh, rendB._mesh);
+		swap(rendA._model, rendB._model);
 		swap(rendA._swapChain, rendB._swapChain);
 		swap(rendA._pipeline, rendB._pipeline);
 		swap(rendA._commandPool, rendB._commandPool);
@@ -45,7 +46,7 @@ public:
 	}
 
 	VulkanRenderer();
-	VulkanRenderer(const Device& device, const Window& window, const std::vector<Shader>& shaders, const Mesh& mesh, const Texture& texture);
+	VulkanRenderer(const Device& device, const Window& window, const std::vector<Shader>& shaders, const Model3D& model3d);
 	VulkanRenderer(const VulkanRenderer& other);
 	VulkanRenderer(VulkanRenderer&& other) noexcept;
 	VulkanRenderer& operator=(VulkanRenderer other);
@@ -59,7 +60,7 @@ private:
 
 	Device _device;
 	Window _window;
-	Mesh _mesh;
+	Model3D _model;
 	SwapChain _swapChain;
 	GraphicsPipeline _pipeline;
 	CommandPool _commandPool;

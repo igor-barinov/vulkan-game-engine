@@ -17,6 +17,10 @@ public:
 
 	Texture();
 	Texture(PNGImage& texture, Device& device, CommandPool& cmdPool);
+	Texture(const Texture& other);
+	Texture(Texture&& other) noexcept;
+	Texture& operator=(Texture other);
+	~Texture();
 
 private:
 

@@ -8,7 +8,7 @@
 VulkanRenderer::VulkanRenderer()
 	: _device(),
 	_window(),
-	_mesh(),
+	_model(),
 	_swapChain(),
 	_pipeline(),
 	_commandPool(),
@@ -24,10 +24,10 @@ VulkanRenderer::VulkanRenderer()
 {
 }
 
-VulkanRenderer::VulkanRenderer(const Device& device, const Window& window, const std::vector<Shader>& shaders, const Mesh& mesh, const Texture& texture)
+VulkanRenderer::VulkanRenderer(const Device& device, const Window& window, const std::vector<Shader>& shaders, const Model3D& model3d)
 	: _device(device),
 	_window(window),
-	_mesh(mesh),
+	_model(model3d),
 	_swapChain(),
 	_pipeline(),
 	_commandPool(),
@@ -49,14 +49,15 @@ VulkanRenderer::VulkanRenderer(const Device& device, const Window& window, const
 	_init_framebuffers();
 	_init_texture_sampler();
 	_init_buffers();
-	_init_descriptor_data(texture);
+	const auto& tex = _model.get_texture();
+	_init_descriptor_data(tex);
 	_init_command_buffers();
 }
 
 VulkanRenderer::VulkanRenderer(const VulkanRenderer& other)
 	: _device(other._device),
 	_window(other._window),
-	_mesh(other._mesh),
+	_model(other._model),
 	_swapChain(other._swapChain),
 	_pipeline(other._pipeline),
 	_commandPool(other._commandPool),
@@ -223,19 +224,20 @@ void VulkanRenderer::_init_buffers()
 	auto graphicsQueue = _device.queue_family_info().get_queue_handle(QueueFamilyType::Graphics);
 
 	// Create staging buffers for vertex/index buffers
-	auto vertexBufSize = _mesh.size_of_vertices();
-	auto indexBufSize = _mesh.size_of_indices();
+	auto mesh = _model.get_mesh();
+	auto vertexBufSize = mesh.size_of_vertices();
+	auto indexBufSize = mesh.size_of_indices();
 	Buffer vertexStagingBuf(_device, Buffer::Type::STAGING, vertexBufSize);
 	Buffer indexStagingBuf(_device, Buffer::Type::STAGING, indexBufSize);
 
 	// Create vertex buffer
 	_vertexBuffer = Buffer(_device, Buffer::Type::VERTEX, vertexBufSize);
-	vertexStagingBuf.copy_to_mapped_mem(_mesh.vertex_data());
+	vertexStagingBuf.copy_to_mapped_mem(mesh.vertex_data());
 	vertexStagingBuf.copy_to(_vertexBuffer, cmdPool, graphicsQueue);
 
 	// Create index buffer
 	_indexBuffer = Buffer(_device, Buffer::Type::INDEX, indexBufSize);
-	indexStagingBuf.copy_to_mapped_mem(_mesh.index_data());
+	indexStagingBuf.copy_to_mapped_mem(mesh.index_data());
 	indexStagingBuf.copy_to(_indexBuffer, cmdPool, graphicsQueue);
 
 	// Create uniform buffers
@@ -309,11 +311,12 @@ void VulkanRenderer::_record_render_pass(VkFramebuffer frameBuffer)
 	VkDeviceSize offsets[] = { 0 };
 	VkBuffer pVertexBuffers[] = {_vertexBuffer.handle()};
 	vkCmdBindVertexBuffers(cmdBufHandle, 0, 1, pVertexBuffers, offsets);
-	vkCmdBindIndexBuffer(cmdBufHandle, _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
+	vkCmdBindIndexBuffer(cmdBufHandle, _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT32);
 
 	auto descriptor = _descriptorPool[currentFrame];
+	auto mesh = _model.get_mesh();
 	vkCmdBindDescriptorSets(cmdBufHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.layout_handle(), 0, 1, &descriptor, 0, nullptr);
-	vkCmdDrawIndexed(cmdBufHandle, static_cast<uint32_t>(_mesh.indices().size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(cmdBufHandle, static_cast<uint32_t>(mesh.indices().size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(cmdBufHandle);
 

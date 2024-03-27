@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
     //*/
     client.add_shader("vert.spv", Shader::VERTEX);
     client.add_shader("frag.spv", Shader::FRAGMENT);
+    client.add_texture("textures/dingus.png");
     client.init({ VK_KHR_SWAPCHAIN_EXTENSION_NAME });
     client.run();
 

@@ -9,8 +9,7 @@
 
 #include "Window.h"
 #include "VulkanRenderer.h"
-#include "Mesh.h"
-#include "Texture.h"
+#include "Model3D.h"
 
 /*
 * Class describing a client for rendering windows
@@ -44,6 +43,11 @@ public:
 	* @param shaderType The type of shader being loaded
 	*/
 	void add_shader(const std::string& filepath, Shader::Type shaderType);
+
+	/* @brief Loads a texture to be used for rendering
+	* @param filepath The path pointing to the image file
+	*/
+	void add_texture(const std::string& filepath);
 
 	/* @brief Initializes the client internals. Must be called before running
 	* 
@@ -79,6 +83,10 @@ private:
 	*/
 	std::vector < std::pair < std::string, Shader::Type> > _shaderFiles;
 
+	/* List of texture files
+	*/
+	std::vector<std::string> _textureFiles;
+
 	/* List of renderers, one per window
 	*/
 	std::vector<VulkanRenderer> _renderers;
@@ -93,8 +101,9 @@ private:
 
 	/* List of meshes
 	*/
-	std::vector<Mesh> _meshes;
-		Texture _tex;
+	Model3D _model3d;
+
+	std::vector<Texture> _textures;
 
 
 
@@ -135,6 +144,8 @@ private:
 	void _create_logical_device(const std::vector<const char*>& deviceExtensions);
 
 	std::vector<Shader> _load_shaders();
+
+	void _load_textures();
 
 	/* @brief Creates the renderers that will draw to windows
 	*/

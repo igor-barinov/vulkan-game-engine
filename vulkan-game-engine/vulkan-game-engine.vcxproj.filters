@@ -20,9 +20,6 @@
     <Filter Include="GraphicsPipeline">
       <UniqueIdentifier>{5989d273-6473-4dab-b778-cfd59b29115c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Example Shaders">
-      <UniqueIdentifier>{c2cfd44e-bda4-4d02-8836-1e0f0d9a27f5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Meshes">
       <UniqueIdentifier>{b94e4185-f3d3-4cb9-8a2f-d2be9a6b0be3}</UniqueIdentifier>
     </Filter>
@@ -37,6 +34,18 @@
     </Filter>
     <Filter Include="Base Classes">
       <UniqueIdentifier>{87feb0ab-3436-4524-98f0-f8482556d630}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{0dbe2659-2ceb-43e6-970e-735c850d0194}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\models">
+      <UniqueIdentifier>{b31439b4-6e85-44e4-a37e-873d2cd1e0fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\shaders">
+      <UniqueIdentifier>{90b9d696-e46e-4b68-82bb-739782c5278d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\textures">
+      <UniqueIdentifier>{9be7156c-ef8e-486d-9972-59ecae848626}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +115,12 @@
     <ClCompile Include="Image.cpp">
       <Filter>Base Classes</Filter>
     </ClCompile>
+    <ClCompile Include="Model3D.cpp">
+      <Filter>Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjFile.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -174,13 +189,27 @@
     <ClInclude Include="DescriptorPool.h">
       <Filter>CommandPool</Filter>
     </ClInclude>
+    <ClInclude Include="Model3D.h">
+      <Filter>Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjFile.h">
+      <Filter>IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.frag">
-      <Filter>Example Shaders</Filter>
+    <Image Include="textures\dingus_nowhiskers.jpg">
+      <Filter>Resources\textures</Filter>
+    </Image>
+    <Image Include="textures\dingus_whiskers.tga.png">
+      <Filter>Resources\textures</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\shader.frag">
+      <Filter>Resources\shaders</Filter>
     </None>
-    <None Include="shader.vert">
-      <Filter>Example Shaders</Filter>
+    <None Include="shaders\shader.vert">
+      <Filter>Resources\shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

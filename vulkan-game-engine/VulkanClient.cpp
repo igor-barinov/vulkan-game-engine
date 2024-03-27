@@ -17,23 +17,12 @@
 VulkanClient::VulkanClient()
 	: _device({}),
 	_windows({}),
-	_shaderFiles({})
+	_shaderFiles({}),
+	_model3d()
 {
-	_meshes = {
-		Mesh({
-			Vertex(-0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0),
-			Vertex(0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0),
-			Vertex(0.5, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0),
-			Vertex(-0.5, 0.5, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0),
-
-			Vertex(-0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0),
-			Vertex(0.5, -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0),
-			Vertex(0.5, 0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0),
-			Vertex(-0.5, 0.5, -0.5, 1.0, 1.0, 1.0, 1.0, 1.0)
-		},
-		{0, 1, 2, 2, 3, 0,
-		 4, 5, 6, 6, 7, 4})
-	};
+	_model3d.from_obj("models/maxwell.obj");
+	_model3d.scale(0.0005);
+	_model3d.rotate_x(90);
 }
 
 VulkanClient::~VulkanClient()
@@ -59,15 +48,18 @@ void VulkanClient::add_shader(const std::string& filepath, Shader::Type shaderTy
 	_shaderFiles.push_back({ filepath, shaderType });
 }
 
+void VulkanClient::add_texture(const std::string& filepath)
+{
+	_textureFiles.push_back(filepath);
+}
+
 void VulkanClient::init(const std::vector<const char*>& deviceExtensions)
 {
 	_create_logical_device(deviceExtensions);
 
-	CommandPool tmpPool(_device);
-	PNGImage texture("test.png");
-	_tex = Texture(texture, _device, tmpPool);
-
 	auto shaders = _load_shaders();
+	_load_textures();
+	_model3d.set_texture(_textures[0]);
 	_create_renderers(shaders);
 }
 
@@ -222,6 +214,16 @@ std::vector<Shader> VulkanClient::_load_shaders()
 	return shaders;
 }
 
+void VulkanClient::_load_textures()
+{
+	CommandPool tempCmdPool(_device);
+	for (const auto& imgFile : _textureFiles)
+	{
+		PNGImage png(imgFile);
+		_textures.push_back(Texture(png, _device, tempCmdPool));
+	}
+}
+
 void VulkanClient::_create_renderers(const std::vector<Shader>& shaders)
 {
 	for (size_t i = 0; i < _windows.size(); ++i)
@@ -230,8 +232,7 @@ void VulkanClient::_create_renderers(const std::vector<Shader>& shaders)
 			_device,
 			_windows[i],
 			shaders,
-			_meshes[0],
-			_tex
+			_model3d
 		));
 	}
 }
